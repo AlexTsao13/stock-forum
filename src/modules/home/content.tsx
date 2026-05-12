@@ -2,8 +2,11 @@ import CommentBtn from "@/modules/home/comment-btn";
 import Pagination from "@/modules/home/pagination";
 import Image from "next/image";
 import PostList from "./post-list";
+import { auth } from "@/auth";
 
-const Content = () => {
+export default async function Content() {
+  const session = await auth(); // 在後端取得目前的 Session
+  const isLoggedIn = !!session?.user; // 判斷有沒有使用者資料
   return (
     <>
       <Image
@@ -20,12 +23,10 @@ const Content = () => {
         trends with professional traders and retail investors.
       </p>
       <div className="w-full mt-8">
-        <CommentBtn />
+        <CommentBtn isLoggedIn={isLoggedIn} />
       </div>
 
       <PostList />
     </>
   );
-};
-
-export default Content;
+}
