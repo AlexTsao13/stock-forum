@@ -11,7 +11,7 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   if (!session?.user) {
     // 如果沒有登入，回傳 401 Unauthorized
     return Response.json(
-      error("Unauthorized", BUSINESS_STATUS_CODE.ACCESS_DENIED),
+      error("Unauthorized", BUSINESS_STATUS_CODE.ERROR),
       {
         status: 401,
       },
