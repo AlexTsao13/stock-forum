@@ -31,7 +31,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Navbar />
-        <MyQueryClientProvider>{children}</MyQueryClientProvider>
+        <main className="pt-16">
+          <MyQueryClientProvider>{children}</MyQueryClientProvider>
+        </main>
       </body>
     </html>
   );

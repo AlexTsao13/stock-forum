@@ -1,5 +1,7 @@
 import clientPromise from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
+import { DB_NAME } from "@/config/constants";
 
 // 註冊新使用者
 export async function createUser(
@@ -8,7 +10,7 @@ export async function createUser(
   name?: string,
 ) {
   const client = await clientPromise;
-  const db = client.db();
+  const db = client.db(DB_NAME);
 
   // 1. 檢查使用者是否已存在
   const existingUser = await db.collection("users").findOne({ email });
@@ -22,6 +24,7 @@ export async function createUser(
 
   // 3. 存入資料庫
   const result = await db.collection("users").insertOne({
+    id: uuidv4(),
     email,
     password: hashedPassword,
     name: name || email.split("@")[0], // 如果沒給名字，就用 Email 前綴
@@ -34,6 +37,6 @@ export async function createUser(
 // 根據 Email 找人（登入時使用）
 export async function getUserByEmail(email: string) {
   const client = await clientPromise;
-  const db = client.db();
+  const db = client.db(DB_NAME);
   return await db.collection("users").findOne({ email });
 }

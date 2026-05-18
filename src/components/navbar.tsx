@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
+
 export default async function Navbar() {
   const session = await auth();
   return (
-    <nav className="w-full h-16 border-b border-white/10 flex items-center justify-between px-6 bg-black">
+    <nav className="fixed top-0 left-0 w-full h-16 border-b border-white/10 flex items-center justify-between px-6 bg-black/80 backdrop-blur-md z-50">
       {/* 左側：首頁按鈕 */}
       <Link href="/" className="text-xl font-bold hover:opacity-80 transition">
         📈 Stock Forum

@@ -32,7 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (isPasswordCorrect) {
             // 驗證成功！回傳資料給 Auth.js 存入 Session
             return {
-              id: user._id.toString(),
+              id: user.id,
               email: user.email,
               name: user.name,
             };
