@@ -1,122 +1,29 @@
 "use client";
 
-import { registerAction } from "./action";
-import { useActionState } from "react";
 import Link from "next/link";
 
 export default function RegisterPage() {
-  const [state, formAction, isPending] = useActionState(registerAction, null);
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 text-black">
-      <div className="p-8 bg-white shadow-md rounded-lg w-96">
-        <h1 className="text-2xl font-bold mb-6 text-center">註冊帳號</h1>
-
-        {/* 成功訊息：包含跳轉按鈕 */}
-        {state?.success && (
-          <div className="flex flex-col items-center gap-4">
-            <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded text-center w-full">
-              註冊成功！
-            </div>
-            <Link
-              href="/login"
-              className="w-full bg-blue-600 text-white text-center py-2 rounded font-bold hover:bg-blue-700 transition"
-            >
-              前往登入
-            </Link>
-          </div>
-        )}
-        {/* 錯誤訊息 */}
-        {state?.error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 text-center">
-            {state.error}
-          </div>
-        )}
-        {/* 成功後隱藏原本的註冊表單 */}
-        {!state?.success && (
-          <form action={formAction} className="flex flex-col gap-4">
-            <input
-              name="name"
-              type="text"
-              placeholder="您的名字"
-              className="p-2 border rounded outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <input
-              name="email"
-              type="email"
-              placeholder="Email"
-              required
-              className="p-2 border rounded outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <input
-              name="password"
-              type="password"
-              placeholder="密碼"
-              required
-              className="p-2 border rounded outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <button
-              type="submit"
-              disabled={isPending}
-              className="bg-blue-600 text-white p-2 rounded font-bold hover:bg-blue-700 transition disabled:bg-gray-400"
-            >
-              {isPending ? "註冊中..." : "註冊"}
-            </button>
-          </form>
-        )}
-        {!state?.success && (
-          <p className="mt-4 text-center text-sm text-gray-600">
-            已經有帳號？{" "}
-            <Link href="/login" className="text-blue-500 hover:underline">
-              立即登入
-            </Link>
-          </p>
-        )}
+    <div className="flex flex-col items-center justify-center min-h-screen bg-[#0a0a0a] text-white px-4">
+      <div className="p-8 bg-neutral-900/50 border border-white/10 backdrop-blur-md rounded-2xl w-full max-w-md shadow-2xl text-center animate-fade-in">
+        <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
+          🔒
+        </div>
+        <h1 className="text-2xl font-extrabold mb-4 bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">
+          註冊功能已暫時關閉
+        </h1>
+        <p className="text-sm text-white/60 leading-relaxed mb-8">
+          此為專案展示，目前會員註冊功能已關閉。 我們已為您準備了{" "}
+          <span className="text-blue-400 font-semibold">體驗帳號</span>
+          ，請返回登入頁面即可開始使用。
+        </p>
+        <Link
+          href="/login"
+          className="inline-block w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-[0_4px_20px_rgba(37,99,235,0.25)] hover:shadow-[0_6px_24px_rgba(37,99,235,0.4)] active:scale-[0.98] transition-all duration-300 text-sm cursor-pointer"
+        >
+          前往登入頁面
+        </Link>
       </div>
     </div>
   );
-
-  // return (
-  //   <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-  //     <div className="p-8 bg-white shadow-md rounded-lg w-96">
-  //       <h1 className="text-2xl font-bold mb-6 text-center text-black">
-  //         註冊帳號
-  //       </h1>
-
-  //       <form action={registerAction} className="flex flex-col gap-4">
-  //         <input
-  //           name="name"
-  //           type="text"
-  //           placeholder="顯示名稱"
-  //           className="p-2 border rounded text-black outline-none focus:ring-2 focus:ring-blue-400"
-  //         />
-  //         <input
-  //           name="email"
-  //           type="email"
-  //           placeholder="Email"
-  //           required
-  //           className="p-2 border rounded text-black outline-none focus:ring-2 focus:ring-blue-400"
-  //         />
-  //         <input
-  //           name="password"
-  //           type="password"
-  //           placeholder="密碼"
-  //           required
-  //           className="p-2 border rounded text-black outline-none focus:ring-2 focus:ring-blue-400"
-  //         />
-  //         <button
-  //           type="submit"
-  //           className="bg-blue-500 text-white p-2 rounded font-bold hover:bg-blue-600 transition"
-  //         >
-  //           立即註冊
-  //         </button>
-  //       </form>
-  //       <p className="mt-4 text-center text-sm text-gray-600">
-  //         已有帳號？{" "}
-  //         <a href="/login" className="text-blue-500 hover:underline">
-  //           至登入頁面
-  //         </a>
-  //       </p>
-  //     </div>
-  //   </div>
-  // );
 }
