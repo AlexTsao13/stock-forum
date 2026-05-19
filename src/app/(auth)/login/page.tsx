@@ -53,7 +53,7 @@ export default function LoginPage() {
             <input
               name="email"
               type="email"
-              placeholder="name@example.com"
+              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -69,7 +69,7 @@ export default function LoginPage() {
             <input
               name="password"
               type="password"
-              placeholder="••••••••"
+              placeholder="密碼"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
