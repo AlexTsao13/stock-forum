@@ -1,8 +1,15 @@
 "use client";
-import useQueryPost from "@/app/hooks/use-query-post";
-import { PostDetail } from "@/components/post-detail";
+import useQueryPost from "@/hooks/use-query-post";
+import { PostDetail } from "./post-detail";
+import { CommentsSection } from "./comments-section";
 import { useRouter } from "next/navigation";
-const Content = () => {
+import { Session } from "next-auth";
+
+interface ContentProps {
+  session: Session | null;
+}
+
+const Content = ({ session }: ContentProps) => {
   const router = useRouter();
   const { data: post, isLoading, error } = useQueryPost();
   //  處理載入中狀態
@@ -32,6 +39,7 @@ const Content = () => {
         <span>←</span> 返回列表
       </button>
       <PostDetail post={post} />
+      <CommentsSection postId={post.id} session={session} />
     </div>
   );
 };

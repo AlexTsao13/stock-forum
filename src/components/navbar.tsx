@@ -35,12 +35,14 @@ export default async function Navbar() {
             >
               登入
             </Link>
-            <Link
-              href="/register"
-              className="text-sm bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded transition"
-            >
-              註冊
-            </Link>
+            {process.env.ENABLE_REGISTER === "true" && (
+              <Link
+                href="/register"
+                className="text-sm bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded transition"
+              >
+                註冊
+              </Link>
+            )}
           </>
         )}
       </div>

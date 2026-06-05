@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { getPostList } from "@/service/post";
+import { getPostList } from "@/services/post";
 const useQueryPostList = () => {
   const searchParams = useSearchParams();
   const currentPage = searchParams.get("page") || "1";

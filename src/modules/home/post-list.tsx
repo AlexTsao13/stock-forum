@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Pagination from "@/modules/home/pagination";
-import useQueryPostList from "@/app/hooks/use-query-post-list";
+import useQueryPostList from "@/hooks/use-query-post-list";
 import { PostCard } from "@/components/post-card";
 
 const PostList = () => {
