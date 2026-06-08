@@ -1,56 +1,36 @@
 "use client";
 
-import { addPost } from "@/service/post";
+import { addPostAction, AddPostState } from "@/app/actions/post";
 import {
   Dialog,
   DialogBackdrop,
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface CommentEditorProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
+const initialState: AddPostState = {};
+
 const CommentEditor = ({ isOpen, setIsOpen }: CommentEditorProps) => {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-
-  const queryClient = useQueryClient();
-  const searchParams = useSearchParams();
-  const currentPage = searchParams.get("page") || "1";
   const router = useRouter();
+  const [state, formAction, isPending] = useActionState(
+    addPostAction,
+    initialState,
+  );
 
-  const { mutate: addPostMutate, isPending } = useMutation({
-    mutationFn: addPost,
-    onSuccess: () => {
+  // 成功後關閉 Modal 並重新整理首頁
+  useEffect(() => {
+    if (state.success) {
       setIsOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["posts", "1"] });
-      if (currentPage !== "1") {
-        router.push(`/?page=1`);
-      }
-    },
-  });
-
-  const onTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
-  };
-  const onContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value);
-  };
-
-  const onPost = () => {
-    if (isPending) return;
-    if (!title || !content) {
-      alert("Please fill in all fields");
-      return;
+      router.refresh();
     }
-    addPostMutate({ title, content });
-  };
+  }, [state.success, setIsOpen, router]);
 
   return (
     <Dialog
@@ -60,38 +40,60 @@ const CommentEditor = ({ isOpen, setIsOpen }: CommentEditorProps) => {
       className="fixed inset-0 flex w-screen items-center justify-center bg-black/30 p-4 transition duration-300 ease-out data-closed:opacity-0"
     >
       <DialogBackdrop className="fixed inset-0 bg-black/70" />
-      <DialogPanel className="max-w-lg z-50 space-y-4 bg-[#131313] border border-white/10 p-4 rounded-lg">
+      <DialogPanel className="w-full max-w-lg z-50 space-y-4 bg-[#131313] border border-white/10 p-4 rounded-lg">
         <DialogTitle className="font-bold text-white">
-          What's on your mind?
+          What&apos;s on your mind?
         </DialogTitle>
-        <input
-          placeholder="Title"
-          type="text"
-          className="w-full h-[40px] border text-sm border-white/10 rounded-md p-2 focus:outline-none"
-          value={title}
-          onChange={onTitleChange}
-        />
-        <textarea
-          placeholder="Comment"
-          className="w-full h-[100px] border text-sm border-white/10 rounded-md p-2 focus:outline-none"
-          value={content}
-          onChange={onContentChange}
-        />
-        <div className="flex gap-4 text-sm justify-end">
-          <button
-            className="text-white/50 font-bold cursor-pointer"
-            onClick={() => setIsOpen(false)}
-          >
-            Cancel
-          </button>
-          <button
-            className="text-white font-bold cursor-pointer"
-            onClick={onPost}
-            disabled={isPending}
-          >
-            {isPending ? "Posting..." : "Post"}
-          </button>
-        </div>
+
+        <form action={formAction} className="space-y-4">
+          <div>
+            <input
+              name="title"
+              placeholder="Title"
+              type="text"
+              className="w-full h-[40px] border text-sm border-white/10 rounded-md p-2 focus:outline-none"
+            />
+            {state.fieldErrors?.title && (
+              <p className="text-red-400 text-xs mt-1">
+                {state.fieldErrors.title[0]}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <textarea
+              name="content"
+              placeholder="Comment"
+              className="w-full h-[100px] border text-sm border-white/10 rounded-md p-2 focus:outline-none"
+            />
+            {state.fieldErrors?.content && (
+              <p className="text-red-400 text-xs mt-1">
+                {state.fieldErrors.content[0]}
+              </p>
+            )}
+          </div>
+
+          {state.error && (
+            <p className="text-red-400 text-xs">{state.error}</p>
+          )}
+
+          <div className="flex gap-4 text-sm justify-end">
+            <button
+              type="button"
+              className="text-white/50 font-bold cursor-pointer"
+              onClick={() => setIsOpen(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="text-white font-bold cursor-pointer disabled:opacity-50"
+              disabled={isPending}
+            >
+              {isPending ? "Posting..." : "Post"}
+            </button>
+          </div>
+        </form>
       </DialogPanel>
     </Dialog>
   );

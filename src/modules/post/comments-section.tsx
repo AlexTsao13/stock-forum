@@ -1,46 +1,39 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import useQueryComments from "@/hooks/use-query-comments";
-import { addComment } from "@/services/comment";
+import { useState, useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Session } from "next-auth";
+import { addCommentAction, AddCommentState } from "@/app/actions/comment";
+import useQueryComments from "@/hooks/use-query-comments";
 
 interface CommentsSectionProps {
   postId: string;
   session: Session | null;
 }
 
+const initialState: AddCommentState = {};
+
 export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
   const [commentContent, setCommentContent] = useState("");
-  const queryClient = useQueryClient();
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
 
-  // Query Comments
+  const [state, formAction, isPending] = useActionState(
+    addCommentAction,
+    initialState,
+  );
+
+  // Query Comments (暫時保留 useQuery，等後續重構留言列表)
   const { data: comments = [], isLoading, error } = useQueryComments(postId);
 
-  // Mutation to Add Comment
-  const { mutate: addCommentMutate, isPending } = useMutation({
-    mutationFn: addComment,
-    onSuccess: () => {
+  // 成功後清空輸入框並刷新頁面
+  useEffect(() => {
+    if (state.success) {
       setCommentContent("");
-      queryClient.invalidateQueries({ queryKey: ["comments", postId] });
-    },
-    onError: (err: any) => {
-      alert(err.message || "留言新增失敗");
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!commentContent.trim() || isPending) return;
-    addCommentMutate({ postId, content: commentContent.trim() });
-  };
-
-  const handleRedirectToLogin = () => {
-    router.push("/login");
-  };
+      formRef.current?.reset();
+      router.refresh();
+    }
+  }, [state.success, router]);
 
   const isLoggedIn = !!session?.user;
 
@@ -109,9 +102,13 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
 
         {isLoggedIn ? (
           <form
-            onSubmit={handleSubmit}
+            ref={formRef}
+            action={formAction}
             className="p-4 bg-white/[0.01] hover:bg-white/[0.02] focus-within:bg-white/[0.03] transition-all duration-300"
           >
+            {/* 把 postId 藏在表單裡，Server Action 才能讀到 */}
+            <input type="hidden" name="postId" value={postId} />
+
             <div className="flex gap-3">
               <div className="w-9 h-9 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0 select-none">
                 {session.user?.name?.[0]?.toUpperCase() || "?"}
@@ -119,11 +116,16 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
 
               <div className="flex-1">
                 <textarea
+                  name="content"
                   value={commentContent}
                   onChange={(e) => setCommentContent(e.target.value)}
                   placeholder="輸入你的留言..."
                   className="w-full bg-transparent text-sm text-white placeholder-white/30 focus:outline-none resize-none min-h-[80px] leading-relaxed pt-1"
                 />
+
+                {state.error && (
+                  <p className="text-red-400 text-xs mt-1">{state.error}</p>
+                )}
 
                 <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
                   <span className="text-xs text-white/30">
@@ -146,7 +148,7 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
           </form>
         ) : (
           <div
-            onClick={handleRedirectToLogin}
+            onClick={() => router.push("/login")}
             className="p-4 bg-white/[0.01] hover:bg-white/[0.03] cursor-pointer transition-all duration-300 group"
           >
             <div className="flex gap-3">

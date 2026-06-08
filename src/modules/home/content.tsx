@@ -3,7 +3,11 @@ import Image from "next/image";
 import { auth } from "@/auth";
 import PostList from "./post-list";
 
-export default async function Content() {
+interface ContentProps {
+  page?: number;
+}
+
+export default async function Content({ page = 1 }: ContentProps) {
   const session = await auth(); // 在後端取得目前的 Session
   const isLoggedIn = !!session?.user; // 判斷有沒有使用者資料
   return (
@@ -26,7 +30,8 @@ export default async function Content() {
         <CommentBtn isLoggedIn={isLoggedIn} />
       </div>
 
-      <PostList />
+      <PostList page={page} />
     </div>
   );
 }
+
