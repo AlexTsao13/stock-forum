@@ -1,4 +1,4 @@
-import CommentBtn from "@/modules/home/comment-btn";
+import PostBtn from "@/modules/home/post-btn";
 import Image from "next/image";
 import { auth } from "@/auth";
 import PostList from "./post-list";
@@ -27,7 +27,7 @@ export default async function Content({ page = 1 }: ContentProps) {
         trends with professional traders and retail investors.
       </p>
       <div className="w-full mt-8">
-        <CommentBtn isLoggedIn={isLoggedIn} />
+        <PostBtn isLoggedIn={isLoggedIn} />
       </div>
 
       <PostList page={page} />

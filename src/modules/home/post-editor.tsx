@@ -10,14 +10,14 @@ import {
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-interface CommentEditorProps {
+interface PostEditorProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
 const initialState: AddPostState = {};
 
-const CommentEditor = ({ isOpen, setIsOpen }: CommentEditorProps) => {
+const PostEditor = ({ isOpen, setIsOpen }: PostEditorProps) => {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(
     addPostAction,
@@ -63,7 +63,7 @@ const CommentEditor = ({ isOpen, setIsOpen }: CommentEditorProps) => {
           <div>
             <textarea
               name="content"
-              placeholder="Comment"
+              placeholder="Content"
               className="w-full h-[100px] border text-sm border-white/10 rounded-md p-2 focus:outline-none"
             />
             {state.fieldErrors?.content && (
@@ -99,4 +99,4 @@ const CommentEditor = ({ isOpen, setIsOpen }: CommentEditorProps) => {
   );
 };
 
-export default CommentEditor;
+export default PostEditor;

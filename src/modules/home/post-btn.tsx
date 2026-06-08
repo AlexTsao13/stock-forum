@@ -1,24 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import CommentEditor from "./comment-editor";
+import PostEditor from "./post-editor";
 import { useRouter } from "next/navigation";
 
-interface CommentBtnProps {
-  isLoggedIn: boolean; // 接收登入狀態
+interface PostBtnProps {
+  isLoggedIn: boolean;
 }
 
-const CommentBtn = ({ isLoggedIn }: CommentBtnProps) => {
+const PostBtn = ({ isLoggedIn }: PostBtnProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
   const handleBtnClick = () => {
     if (!isLoggedIn) {
-      // 如果沒登入，就導向登入頁
       router.push("/login");
       return;
     }
-    // 有登入才打開編輯器
     setIsOpen(true);
   };
 
@@ -30,9 +28,9 @@ const CommentBtn = ({ isLoggedIn }: CommentBtnProps) => {
       >
         發表文章
       </button>
-      <CommentEditor isOpen={isOpen} setIsOpen={setIsOpen} />
+      <PostEditor isOpen={isOpen} setIsOpen={setIsOpen} />
     </>
   );
 };
 
-export default CommentBtn;
+export default PostBtn;
