@@ -1,20 +1,9 @@
 "use server";
 
-import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import clientPromise from "@/lib/mongodb";
-import { DB_NAME } from "@/config/constants";
-import { v4 as uuidv4 } from "uuid";
 import { auth } from "@/auth";
-
-// Zod Schema：定義表單的規則（標題、內容的格式要求）
-const postSchema = z.object({
-  title: z
-    .string()
-    .min(1, "標題不能為空")
-    .max(100, "標題最多 100 個字"),
-  content: z.string().min(10, "內容至少需要 10 個字"),
-});
+import { createPost } from "@/services/db/post";
+import { postSchema } from "@/schemas/post";
 
 export type AddPostState = {
   error?: string | null;
@@ -27,7 +16,7 @@ export type AddPostState = {
 
 export async function addPostAction(
   _prevState: AddPostState,
-  formData: FormData,
+  formData: FormData
 ): Promise<AddPostState> {
   // 1. 確認已登入
   const session = await auth();
@@ -35,34 +24,28 @@ export async function addPostAction(
     return { error: "請先登入才能發文" };
   }
 
+  const title = formData.get("title");
+  const content = formData.get("content");
+
   // 2. 用 Zod 驗證表單資料
-  const parsed = postSchema.safeParse({
-    title: formData.get("title"),
-    content: formData.get("content"),
-  });
+  const parsed = postSchema.safeParse({ title, content });
 
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
-  // 3. 寫入資料庫
-  const { title, content } = parsed.data;
-  const client = await clientPromise;
-  const db = client.db(DB_NAME);
-  await db.collection("posts").insertOne({
-    id: uuidv4(),
-    title,
-    content,
-    createdAt: new Date().getTime(),
-    author: {
-      id: session.user?.id,
-      name: session.user?.name,
-      email: session.user?.email,
-    },
-  });
+  try {
+    // 3. 呼叫伺服器端資料庫服務寫入
+    await createPost(parsed.data, {
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+    });
 
-  // 4. 清除首頁快取，讓新文章立即顯示
-  revalidatePath("/");
-
-  return { success: true };
+    // 4. 清除快取以立即更新首頁
+    revalidatePath("/");
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message || "發文失敗，請重試" };
+  }
 }

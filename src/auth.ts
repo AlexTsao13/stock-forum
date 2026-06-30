@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "./lib/mongodb"; // 注意這裡的路徑
 import Credentials from "next-auth/providers/credentials";
-import { getUserByEmail } from "@/services/user";
+import { getUserByEmail } from "@/services/db/user";
 import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({

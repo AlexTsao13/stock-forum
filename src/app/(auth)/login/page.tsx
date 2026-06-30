@@ -1,28 +1,25 @@
 "use client";
-import { loginAction } from "./action";
-import { useActionState, useState, useRef } from "react";
+import { loginAction, loginAsGuestAction } from "./action";
+import { useActionState, useState } from "react";
 
 export default function LoginPage() {
-  // state 會接住 action 回傳的結果
   const [state, formAction, isPending] = useActionState(loginAction, null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isDemoLoggingIn, setIsDemoLoggingIn] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
 
   const handleDemoLogin = () => {
     setIsDemoLoggingIn(true);
-    const targetEmail = "visitor@stockmarket.com";
-    const targetPassword = "123456";
 
-    // 仿生自動輸入效果
-    setEmail(targetEmail);
-    setPassword(targetPassword);
+    // 仿生自動輸入效果（僅顯示虛擬帳密）
+    setEmail("visitor@stockmarket.com");
+    setPassword("••••••");
 
-    // 延遲 400ms 讓使用者目睹「帳密自動輸入」的精緻視覺效果後再提交
-    setTimeout(() => {
-      if (formRef.current) {
-        formRef.current.requestSubmit();
+    // 延遲 400ms 讓使用者目睹「帳密自動輸入」的精緻視覺效果後直接呼叫 Server Action
+    setTimeout(async () => {
+      const result = await loginAsGuestAction();
+      if (result?.error) {
+        setIsDemoLoggingIn(false);
       }
     }, 400);
   };
@@ -45,7 +42,7 @@ export default function LoginPage() {
         )}
 
         {/* 1. 傳統登入表單區塊 */}
-        <form ref={formRef} action={formAction} className="flex flex-col gap-4">
+        <form action={formAction} className="flex flex-col gap-4">
           <div>
             <label className="block text-xs font-semibold text-white/40 mb-1.5 uppercase tracking-wider">
               電子信箱
@@ -60,6 +57,11 @@ export default function LoginPage() {
               readOnly={isDemoLoggingIn}
               className="w-full p-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all duration-200 text-sm"
             />
+            {state?.fieldErrors?.email && (
+              <p className="text-red-400 text-xs mt-1">
+                {state.fieldErrors.email[0]}
+              </p>
+            )}
           </div>
 
           <div>
@@ -76,6 +78,11 @@ export default function LoginPage() {
               readOnly={isDemoLoggingIn}
               className="w-full p-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all duration-200 text-sm"
             />
+            {state?.fieldErrors?.password && (
+              <p className="text-red-400 text-xs mt-1">
+                {state.fieldErrors.password[0]}
+              </p>
+            )}
           </div>
 
           {/* 一般登入提交按鈕 */}

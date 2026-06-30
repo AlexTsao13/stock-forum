@@ -1,17 +1,37 @@
 "use server";
+
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
-export async function loginAction(prevState: any, formData: FormData) {
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
+import { loginSchema } from "@/schemas/auth";
+
+export type LoginState = {
+  error?: string | null;
+  fieldErrors?: {
+    email?: string[];
+    password?: string[];
+  };
+};
+
+export async function loginAction(
+  _prevState: LoginState | null,
+  formData: FormData
+): Promise<LoginState> {
+  const email = formData.get("email");
+  const password = formData.get("password");
+
+  // Validate inputs using Zod Schema
+  const parsed = loginSchema.safeParse({ email, password });
+  if (!parsed.success) {
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
   try {
-    // 呼叫 Auth.js 提供的登入函式
-    // "credentials" 對應到在 auth.ts 裡設定的名稱
     await signIn("credentials", {
-      email,
-      password,
-      redirectTo: "/", // 登入成功後導向首頁
+      email: parsed.data.email,
+      password: parsed.data.password,
+      redirectTo: "/", // Redirect to home on success
     });
+    return {};
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
@@ -21,7 +41,25 @@ export async function loginAction(prevState: any, formData: FormData) {
           return { error: "登入發生錯誤" };
       }
     }
-    // 注意：redirect 內部也是拋出錯誤，所以這裡必須把非 AuthError 拋出去
+    throw error;
+  }
+}
+
+export async function loginAsGuestAction(): Promise<LoginState> {
+  const email = process.env.DEMO_EMAIL || "visitor@stockmarket.com";
+  const password = process.env.DEMO_PASSWORD || "123456";
+
+  try {
+    await signIn("credentials", {
+      email,
+      password,
+      redirectTo: "/", // Redirect to home on success
+    });
+    return {};
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { error: "訪客帳號登入失敗，請確認伺服器設定" };
+    }
     throw error;
   }
 }

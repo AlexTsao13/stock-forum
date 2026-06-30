@@ -12,21 +12,6 @@ export const getPostList = async (page: string): Promise<PostListResponse> => {
   return resData.data;
 };
 
-export const addPost = async (data: {
-  title: string;
-  content: string;
-}): Promise<Post> => {
-  const response = await fetch("/api/post/add", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-  const resData = await response.json();
-  return resData.data;
-};
-
 export const getPost = async (id: string): Promise<Post> => {
   const response = await fetch(`/api/post/detail?id=${id}`);
   const resData = await response.json();
