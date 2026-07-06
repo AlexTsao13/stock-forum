@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@headlessui/react";
 import { useActionState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
 interface PostEditorProps {
@@ -19,6 +20,7 @@ const initialState: AddPostState = {};
 
 const PostEditor = ({ isOpen, setIsOpen }: PostEditorProps) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [state, formAction, isPending] = useActionState(
     addPostAction,
     initialState,
@@ -28,9 +30,10 @@ const PostEditor = ({ isOpen, setIsOpen }: PostEditorProps) => {
   useEffect(() => {
     if (state.success) {
       setIsOpen(false);
+      void queryClient.invalidateQueries({ queryKey: ["posts"] });
       router.refresh();
     }
-  }, [state.success, setIsOpen, router]);
+  }, [state.success, setIsOpen, router, queryClient]);
 
   return (
     <Dialog

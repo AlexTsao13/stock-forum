@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Session } from "next-auth";
 import { addCommentAction, AddCommentState } from "@/app/actions/comment";
 import useQueryComments from "@/hooks/use-query-comments";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CommentsSectionProps {
   postId: string;
@@ -16,6 +17,7 @@ const initialState: AddCommentState = {};
 export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
   const [commentContent, setCommentContent] = useState("");
   const router = useRouter();
+  const queryClient = useQueryClient();
   const formRef = useRef<HTMLFormElement>(null);
 
   const [state, formAction, isPending] = useActionState(
@@ -31,9 +33,10 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
     if (state.success) {
       setCommentContent("");
       formRef.current?.reset();
+      void queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       router.refresh();
     }
-  }, [state.success, router]);
+  }, [state.success, router, postId, queryClient]);
 
   const isLoggedIn = !!session?.user;
 
