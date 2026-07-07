@@ -1,39 +1,62 @@
 "use client";
 
-import { addPostAction, AddPostState } from "@/app/actions/post";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogBackdrop,
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { useActionState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import useMutationAddPost from "@/hooks/use-mutation-add-post";
+import { postSchema } from "@/schemas/post";
 
 interface PostEditorProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }
 
-const initialState: AddPostState = {};
-
 const PostEditor = ({ isOpen, setIsOpen }: PostEditorProps) => {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const [state, formAction, isPending] = useActionState(
-    addPostAction,
-    initialState,
-  );
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{
+    title?: string[];
+    content?: string[];
+  }>({});
 
-  // 成功後關閉 Modal 並重新整理首頁
+  const {
+    mutate: addPost,
+    isPending,
+    error,
+    isSuccess,
+    reset,
+  } = useMutationAddPost();
+
+  // 成功後關閉 Modal、清空表單、重新整理首頁
   useEffect(() => {
-    if (state.success) {
+    if (isSuccess) {
       setIsOpen(false);
-      void queryClient.invalidateQueries({ queryKey: ["posts"] });
+      setTitle("");
+      setContent("");
       router.refresh();
+      reset(); // 重置 mutation 狀態,避免下次打開 Modal 殘留上次的成功狀態
     }
-  }, [state.success, setIsOpen, router, queryClient]);
+  }, [isSuccess, setIsOpen, router, reset]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFieldErrors({});
+
+    // 前端先用 Zod 驗證一次
+    const parsed = postSchema.safeParse({ title, content });
+    if (!parsed.success) {
+      setFieldErrors(parsed.error.flatten().fieldErrors);
+      return;
+    }
+
+    addPost(parsed.data);
+  };
 
   return (
     <Dialog
@@ -48,17 +71,19 @@ const PostEditor = ({ isOpen, setIsOpen }: PostEditorProps) => {
           What&apos;s on your mind?
         </DialogTitle>
 
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <input
               name="title"
               placeholder="Title"
               type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="w-full h-[40px] border text-sm border-white/10 rounded-md p-2 focus:outline-none"
             />
-            {state.fieldErrors?.title && (
+            {fieldErrors.title && (
               <p className="text-red-400 text-xs mt-1">
-                {state.fieldErrors.title[0]}
+                {fieldErrors.title[0]}
               </p>
             )}
           </div>
@@ -67,17 +92,21 @@ const PostEditor = ({ isOpen, setIsOpen }: PostEditorProps) => {
             <textarea
               name="content"
               placeholder="Content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
               className="w-full h-[100px] border text-sm border-white/10 rounded-md p-2 focus:outline-none"
             />
-            {state.fieldErrors?.content && (
+            {fieldErrors.content && (
               <p className="text-red-400 text-xs mt-1">
-                {state.fieldErrors.content[0]}
+                {fieldErrors.content[0]}
               </p>
             )}
           </div>
 
-          {state.error && (
-            <p className="text-red-400 text-xs">{state.error}</p>
+          {error && (
+            <p className="text-red-400 text-xs">
+              {error instanceof Error ? error.message : "發文失敗，請重試"}
+            </p>
           )}
 
           <div className="flex gap-4 text-sm justify-end">
