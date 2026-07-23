@@ -14,7 +14,7 @@ export type LoginState = {
 
 export async function loginAction(
   _prevState: LoginState | null,
-  formData: FormData
+  formData: FormData,
 ): Promise<LoginState> {
   const email = formData.get("email");
   const password = formData.get("password");
@@ -36,11 +36,13 @@ export async function loginAction(
     if (error instanceof AuthError) {
       switch (error.type) {
         case "CredentialsSignin":
+          console.log(error);
           return { error: "信箱或密碼錯誤" };
         default:
           return { error: "登入發生錯誤" };
       }
     }
+
     throw error;
   }
 }

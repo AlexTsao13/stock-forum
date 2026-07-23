@@ -9,12 +9,9 @@ export const POST = withApiHandler(async (request: NextRequest) => {
   const session = await auth();
   if (!session?.user) {
     // 若未登入，回傳 401 Unauthorized
-    return Response.json(
-      error("Unauthorized", BUSINESS_STATUS_CODE.ERROR),
-      {
-        status: 401,
-      }
-    );
+    return Response.json(error("Unauthorized", BUSINESS_STATUS_CODE.ERROR), {
+      status: 401,
+    });
   }
 
   const body = await request.json();
@@ -33,14 +30,14 @@ export const POST = withApiHandler(async (request: NextRequest) => {
       }),
       {
         status: 200,
-      }
+      },
     );
   } catch (err: any) {
     return Response.json(
       error(err.message || "Invalid post data", BUSINESS_STATUS_CODE.WARNING),
       {
         status: 400,
-      }
+      },
     );
   }
 });

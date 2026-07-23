@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Session } from "next-auth";
 import useQueryComments from "@/hooks/use-query-comments";
 import useMutationAddComment from "@/hooks/use-mutation-add-comment";
+import { commentSchema } from "@/schemas/comment";
 
 interface CommentsSectionProps {
   postId: string;
@@ -13,6 +14,7 @@ interface CommentsSectionProps {
 
 export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
   const [commentContent, setCommentContent] = useState("");
+  const [fieldError, setFieldError] = useState<string | null>(null);
   const router = useRouter();
 
   // Query Comments (不變)
@@ -28,16 +30,21 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!commentContent.trim()) return;
+    setFieldError(null);
 
-    addComment(
-      { postId, content: commentContent },
-      {
-        onSuccess: () => {
-          setCommentContent("");
-        },
+    // 前端先用 Zod 驗證一次
+    const parsed = commentSchema.safeParse({ postId, content: commentContent });
+    if (!parsed.success) {
+      const firstError = parsed.error.flatten().fieldErrors;
+      setFieldError(firstError.content?.[0] ?? "資料格式錯誤");
+      return;
+    }
+
+    addComment(parsed.data, {
+      onSuccess: () => {
+        setCommentContent("");
       },
-    );
+    });
   };
 
   return (
@@ -120,11 +127,12 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
                   className="w-full bg-transparent text-sm text-white placeholder-white/30 focus:outline-none resize-none min-h-[80px] leading-relaxed pt-1"
                 />
 
-                {submitError && (
+                {(fieldError || submitError) && (
                   <p className="text-red-400 text-xs mt-1">
-                    {submitError instanceof Error
-                      ? submitError.message
-                      : "留言失敗，請重試"}
+                    {fieldError ??
+                      (submitError instanceof Error
+                        ? submitError.message
+                        : "留言失敗，請重試")}
                   </p>
                 )}
 

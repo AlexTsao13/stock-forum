@@ -46,4 +46,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/login", // 自定義登入頁面路徑
   },
+  callbacks: {
+    // authorize 回傳的 user 物件會進到 jwt callback 的 user 參數（僅第一次登入時）
+    async jwt({ token, user }) {
+      if (user?.id) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    // 每次存取 session 時，把 token.id 帶入 session.user.id
+    async session({ session, token }) {
+      if (token?.id) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+  },
 });
+

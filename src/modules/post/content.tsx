@@ -1,9 +1,11 @@
 "use client";
+import { useState } from "react";
 import useQueryPost from "@/hooks/use-query-post";
 import { PostDetail } from "./post-detail";
 import { CommentsSection } from "./comments-section";
 import { useRouter } from "next/navigation";
 import { Session } from "next-auth";
+import PostEditor from "@/modules/home/post-editor";
 
 interface ContentProps {
   session: Session | null;
@@ -12,6 +14,8 @@ interface ContentProps {
 const Content = ({ session }: ContentProps) => {
   const router = useRouter();
   const { data: post, isLoading, error } = useQueryPost();
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
   //  處理載入中狀態
   if (isLoading) {
     return <div className="py-20 text-center text-white/50">文章載入中...</div>;
@@ -38,8 +42,19 @@ const Content = ({ session }: ContentProps) => {
       >
         <span>←</span> 返回列表
       </button>
-      <PostDetail post={post} />
+      <PostDetail
+        post={post}
+        session={session}
+        onEditClick={() => setIsEditOpen(true)}
+      />
       <CommentsSection postId={post.id} session={session} />
+
+      {/* 編輯文章 Modal（僅在作者點擊編輯時渲染） */}
+      <PostEditor
+        isOpen={isEditOpen}
+        setIsOpen={setIsEditOpen}
+        post={post}
+      />
     </div>
   );
 };
