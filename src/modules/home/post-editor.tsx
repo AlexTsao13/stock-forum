@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogBackdrop,
@@ -28,6 +28,22 @@ const PostEditor = ({ isOpen, setIsOpen, post }: PostEditorProps) => {
     title?: string[];
     content?: string[];
   }>({});
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // 自動依內容高度調整 textarea 高度（最小 160px，最大 360px，未達上限前隱藏捲動軸）
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    const scrollHeight = textarea.scrollHeight;
+    if (scrollHeight >= 360) {
+      textarea.style.height = "360px";
+      textarea.style.overflowY = "auto";
+    } else {
+      textarea.style.height = `${Math.max(scrollHeight, 160)}px`;
+      textarea.style.overflowY = "hidden";
+    }
+  };
 
   // 當 Modal 打開時，依模式填入初始值
   useEffect(() => {
@@ -35,6 +51,8 @@ const PostEditor = ({ isOpen, setIsOpen, post }: PostEditorProps) => {
       setTitle(isEditMode ? post.title : "");
       setContent(isEditMode ? post.content : "");
       setFieldErrors({});
+      // 等待 DOM 渲染完畢後調整高度
+      setTimeout(adjustTextareaHeight, 0);
     }
   }, [isOpen, isEditMode, post]);
 
@@ -93,20 +111,20 @@ const PostEditor = ({ isOpen, setIsOpen, post }: PostEditorProps) => {
       className="fixed inset-0 flex w-screen items-center justify-center bg-black/30 p-4 transition duration-300 ease-out data-closed:opacity-0"
     >
       <DialogBackdrop className="fixed inset-0 bg-black/70" />
-      <DialogPanel className="w-full max-w-lg z-50 space-y-4 bg-[#131313] border border-white/10 p-4 rounded-lg">
-        <DialogTitle className="font-bold text-white">
-          {isEditMode ? "編輯文章" : "What's on your mind?"}
+      <DialogPanel className="w-full max-w-lg z-50 space-y-4 bg-[#131313] border border-white/10 p-5 rounded-2xl shadow-2xl shadow-black/80">
+        <DialogTitle className="font-bold text-white text-lg">
+          {isEditMode ? "編輯文章" : "發表新文章"}
         </DialogTitle>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <input
               name="title"
-              placeholder="Title"
+              placeholder="文章標題"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full h-[40px] border text-sm border-white/10 rounded-md p-2 focus:outline-none"
+              className="w-full h-[42px] border text-sm border-white/10 rounded-lg p-3 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/60 transition"
             />
             {fieldErrors.title && (
               <p className="text-red-400 text-xs mt-1">
@@ -117,11 +135,15 @@ const PostEditor = ({ isOpen, setIsOpen, post }: PostEditorProps) => {
 
           <div>
             <textarea
+              ref={textareaRef}
               name="content"
-              placeholder="Content"
+              placeholder="輸入文章內容..."
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full h-[100px] border text-sm border-white/10 rounded-md p-2 focus:outline-none"
+              onChange={(e) => {
+                setContent(e.target.value);
+                adjustTextareaHeight();
+              }}
+              className="w-full min-h-[160px] max-h-[360px] border text-sm border-white/10 rounded-lg p-3 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/60 transition resize-none"
             />
             {fieldErrors.content && (
               <p className="text-red-400 text-xs mt-1">
