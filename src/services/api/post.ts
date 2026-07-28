@@ -7,19 +7,19 @@ interface PostListResponse {
 }
 
 export const getPostList = async (page: string): Promise<PostListResponse> => {
-  const response = await fetch(`/api/post/list?page=${page}&limit=5`);
+  const response = await fetch(`/api/posts?page=${page}&limit=5`);
   const resData = await response.json();
   return resData.data;
 };
 
 export const getPost = async (id: string): Promise<Post> => {
-  const response = await fetch(`/api/post/detail?id=${id}`);
+  const response = await fetch(`/api/posts/${id}`);
   const resData = await response.json();
   return resData.data;
 };
 
 export const addPost = async (data: { title: string; content: string }) => {
-  const response = await fetch("/api/post/add", {
+  const response = await fetch("/api/posts", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -32,16 +32,17 @@ export const updatePost = async (data: {
   title: string;
   content: string;
 }) => {
-  const response = await fetch("/api/post/update", {
+  const { id, title, content } = data;
+  const response = await fetch(`/api/posts/${id}`, {
     method: "PUT",
-    body: JSON.stringify(data),
+    body: JSON.stringify({ title, content }),
   });
   const resData = await response.json();
   return resData.data;
 };
 
 export const deletePost = async (id: string) => {
-  const response = await fetch(`/api/post/delete?id=${id}`, {
+  const response = await fetch(`/api/posts/${id}`, {
     method: "DELETE",
   });
   const resData = await response.json();
