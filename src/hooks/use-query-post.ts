@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { getPost } from "@/services/api/post";
+import { getPost } from "@/services/client/post";
 
 const useQueryPost = () => {
   const { id } = useParams();

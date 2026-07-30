@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getCommentList } from "@/services/api/comment";
+import { getCommentList } from "@/services/client/comment";
 
 const useQueryComments = (postId: string) => {
   return useQuery({
