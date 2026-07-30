@@ -6,8 +6,8 @@ const useMutationUpdatePost = () => {
 
   return useMutation({
     mutationFn: updatePost,
-    onSuccess: (_, variables) => {
-      // 讓文章列表與該篇文章詳情重新獲取最新資料
+    onSuccess: (_data, variables) => {
+      // 更新成功後，讓貼文列表與該貼文詳情重新抓取最新資料
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post", variables.id] });
     },

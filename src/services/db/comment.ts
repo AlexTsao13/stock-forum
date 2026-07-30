@@ -1,7 +1,12 @@
 import "server-only";
 import clientPromise from "@/lib/mongodb";
 import { DB_NAME } from "@/config/constants";
-import { commentSchema, CommentInput } from "@/schemas/comment";
+import {
+  commentSchema,
+  commentContentSchema,
+  CommentInput,
+  CommentContentInput,
+} from "@/schemas/comment";
 import { v4 as uuidv4 } from "uuid";
 
 // 根據文章 ID 取得所有留言（依時間正序）
@@ -10,10 +15,15 @@ export async function getCommentsByPostId(postId: string) {
   const db = client.db(DB_NAME);
   const collection = db.collection("comments");
 
-  return await collection
+  const comments = await collection
     .find({ postId })
     .sort({ createdAt: 1 })
     .toArray();
+
+  return comments.map((comment) => ({
+    ...comment,
+    content: comment.isDeleted ? "" : comment.content,
+  }));
 }
 
 // 建立新留言
@@ -40,6 +50,8 @@ export async function createComment(
     postId,
     content,
     createdAt: new Date().getTime(),
+    isDeleted: false,
+    deletedAt: null,
     author: {
       id: author.id,
       name: author.name,
@@ -49,4 +61,68 @@ export async function createComment(
 
   await collection.insertOne(newComment);
   return newComment;
+}
+
+export async function updateComment(
+  id: string,
+  rawData: CommentContentInput,
+  authorId: string,
+) {
+  const parsed = commentContentSchema.safeParse(rawData);
+  if (!parsed.success) {
+    const firstError = parsed.error.flatten().fieldErrors;
+    const message = firstError.content?.[0] || "Invalid comment data";
+    throw new Error(message);
+  }
+
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+  const collection = db.collection("comments");
+
+  const comment = await collection.findOne({ id });
+  if (!comment) {
+    throw new Error("Comment not found");
+  }
+
+  if (comment.author?.id !== authorId) {
+    throw new Error("Forbidden: You are not the author of this comment");
+  }
+
+  if (comment.isDeleted) {
+    throw new Error("Comment not found");
+  }
+
+  const { content } = parsed.data;
+  await collection.updateOne(
+    { id },
+    { $set: { content, updatedAt: new Date().getTime() } },
+  );
+
+  return { id, content };
+}
+
+export async function deleteComment(id: string, authorId: string) {
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+  const collection = db.collection("comments");
+
+  const comment = await collection.findOne({ id });
+  if (!comment) {
+    throw new Error("Comment not found");
+  }
+
+  if (comment.author?.id !== authorId) {
+    throw new Error("Forbidden: You are not the author of this comment");
+  }
+
+  await collection.updateOne(
+    { id },
+    {
+      $set: {
+        isDeleted: true,
+        deletedAt: new Date().getTime(),
+      },
+    },
+  );
+  return { id };
 }

@@ -5,9 +5,13 @@ import Pagination from "@/modules/home/pagination";
 import useQueryPostList from "@/hooks/use-query-post-list";
 import { PostCard } from "@/components/post-card";
 
-const PostList = () => {
+interface PostListProps {
+  page?: number;
+}
+
+const PostList = ({ page = 1 }: PostListProps) => {
   const { data, isLoading, error } = useQueryPostList();
-  const { posts = [], totalPages } = data || {};
+  const { posts = [], totalPages = 1 } = data || {};
   return (
     <div className="mt-8 ">
       {isLoading && <p>Loading...</p>}

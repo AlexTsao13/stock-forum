@@ -1,7 +1,5 @@
 "use client";
 
-// 文章全文
-
 import { useRouter } from "next/navigation";
 import { Session } from "next-auth";
 import useMutationDeletePost from "@/hooks/use-mutation-delete-post";
@@ -17,6 +15,7 @@ interface PostDetailProps {
 export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
   const router = useRouter();
   const isAuthor = session?.user?.id === post.author?.id;
+  const isEdited = !!post.updatedAt && post.updatedAt > post.createdAt;
 
   const {
     mutate: deletePost,
@@ -24,7 +23,6 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
     isSuccess: isDeleteSuccess,
   } = useMutationDeletePost();
 
-  // 刪除成功後導回首頁
   useEffect(() => {
     if (isDeleteSuccess) {
       router.push("/");
@@ -32,13 +30,12 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
   }, [isDeleteSuccess, router]);
 
   const handleDelete = () => {
-    if (!confirm("確定要刪除這篇文章嗎？此動作無法復原。")) return;
+    if (!confirm("確定要刪除這篇貼文嗎？")) return;
     deletePost(post.id);
   };
 
   return (
     <div className="w-full pb-10">
-      {/* 作者資訊 + 操作按鈕 */}
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3 text-gray-400 text-sm">
           <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
@@ -50,14 +47,18 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
             <p className="text-white/40">
               {new Date(post.createdAt).toLocaleDateString()}
             </p>
+            {isEdited && (
+              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-white/50">
+                已編輯
+              </span>
+            )}
           </div>
         </div>
 
-        {/* 僅作者可見的操作選單 (...) */}
         {isAuthor && (
           <Menu as="div" className="relative">
             <MenuButton
-              aria-label="更多選項"
+              aria-label="貼文操作"
               className="p-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition cursor-pointer flex items-center justify-center focus:outline-none"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -87,7 +88,7 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
                       d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                     />
                   </svg>
-                  <span>編輯文章</span>
+                  <span>編輯</span>
                 </button>
               </MenuItem>
 
@@ -110,7 +111,7 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                     />
                   </svg>
-                  <span>{isDeleting ? "刪除中..." : "刪除文章"}</span>
+                  <span>{isDeleting ? "刪除中..." : "刪除"}</span>
                 </button>
               </MenuItem>
             </MenuItems>
@@ -118,11 +119,10 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
         )}
       </div>
 
-      {/* 標題 */}
       <h1 className="text-4xl font-extrabold text-white mb-8 leading-tight">
         {post.title}
       </h1>
-      {/* 文章內容 */}
+
       <div className="text-lg text-white/80 leading-relaxed whitespace-pre-wrap border-t border-white/10 pt-8">
         {post.content}
       </div>

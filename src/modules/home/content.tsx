@@ -34,4 +34,3 @@ export default async function Content({ page = 1 }: ContentProps) {
     </div>
   );
 }
-

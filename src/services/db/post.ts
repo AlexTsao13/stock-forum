@@ -92,12 +92,13 @@ export async function updatePost(
   }
 
   const { title, content } = parsed.data;
+  const updatedAt = new Date().getTime();
   await collection.updateOne(
     { id },
-    { $set: { title, content, updatedAt: new Date().getTime() } },
+    { $set: { title, content, updatedAt } },
   );
 
-  return { id, title, content };
+  return { id, title, content, updatedAt };
 }
 
 export async function deletePost(id: string, authorId: string) {

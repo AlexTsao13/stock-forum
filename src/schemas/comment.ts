@@ -6,3 +6,9 @@ export const commentSchema = z.object({
 });
 
 export type CommentInput = z.infer<typeof commentSchema>;
+
+export const commentContentSchema = z.object({
+  content: z.string().min(1, "留言內容不可為空").max(500, "留言最多 500 個字"),
+});
+
+export type CommentContentInput = z.infer<typeof commentContentSchema>;
