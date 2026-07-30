@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@headlessui/react";
 import { useRouter } from "next/navigation";
-import useMutationAddPost from "@/hooks/use-mutation-add-post";
+import useMutationCreatePost from "@/hooks/use-mutation-create-post";
 import useMutationUpdatePost from "@/hooks/use-mutation-update-post";
 import { postSchema } from "@/schemas/post";
 
@@ -57,12 +57,12 @@ const PostEditor = ({ isOpen, setIsOpen, post }: PostEditorProps) => {
   }, [isOpen, isEditMode, post]);
 
   const {
-    mutate: addPost,
-    isPending: isAdding,
-    error: addError,
-    isSuccess: isAddSuccess,
-    reset: resetAdd,
-  } = useMutationAddPost();
+    mutate: createPost,
+    isPending: isCreating,
+    error: createError,
+    isSuccess: isCreateSuccess,
+    reset: resetCreate,
+  } = useMutationCreatePost();
 
   const {
     mutate: updatePost,
@@ -72,18 +72,25 @@ const PostEditor = ({ isOpen, setIsOpen, post }: PostEditorProps) => {
     reset: resetUpdate,
   } = useMutationUpdatePost();
 
-  const isPending = isAdding || isUpdating;
-  const error = addError || updateError;
+  const isPending = isCreating || isUpdating;
+  const error = createError || updateError;
 
   // 新增或編輯成功後，關閉 Modal 並重新整理頁面
   useEffect(() => {
-    if (isAddSuccess || isUpdateSuccess) {
+    if (isCreateSuccess || isUpdateSuccess) {
       setIsOpen(false);
       router.refresh();
-      resetAdd();
+      resetCreate();
       resetUpdate();
     }
-  }, [isAddSuccess, isUpdateSuccess, setIsOpen, router, resetAdd, resetUpdate]);
+  }, [
+    isCreateSuccess,
+    isUpdateSuccess,
+    setIsOpen,
+    router,
+    resetCreate,
+    resetUpdate,
+  ]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +106,7 @@ const PostEditor = ({ isOpen, setIsOpen, post }: PostEditorProps) => {
     if (isEditMode) {
       updatePost({ id: post.id, ...parsed.data });
     } else {
-      addPost(parsed.data);
+      createPost(parsed.data);
     }
   };
 

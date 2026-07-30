@@ -4,7 +4,7 @@ export const getCommentList = async (postId: string): Promise<Comment[]> => {
   return resData.data || [];
 };
 
-export const addComment = async (data: {
+export const createComment = async (data: {
   postId: string;
   content: string;
 }): Promise<Comment> => {
@@ -17,7 +17,7 @@ export const addComment = async (data: {
   });
   const resData = await response.json();
   if (!response.ok) {
-    throw new Error(resData.message || "Failed to add comment");
+    throw new Error(resData.message || "Failed to create comment");
   }
   return resData.data;
 };

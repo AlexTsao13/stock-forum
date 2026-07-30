@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addComment } from "@/services/client/comment";
+import { createComment } from "@/services/client/comment";
 
-const useMutationAddComment = (postId: string) => {
+const useMutationCreateComment = (postId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: addComment,
+    mutationFn: createComment,
     onSuccess: () => {
       // 只讓「這篇貼文」的留言列表重新抓取,不影響其他貼文
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -13,4 +13,4 @@ const useMutationAddComment = (postId: string) => {
   });
 };
 
-export default useMutationAddComment;
+export default useMutationCreateComment;

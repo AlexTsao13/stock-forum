@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Session } from "next-auth";
 import useQueryComments from "@/hooks/use-query-comments";
-import useMutationAddComment from "@/hooks/use-mutation-add-comment";
+import useMutationCreateComment from "@/hooks/use-mutation-create-comment";
 import { commentSchema } from "@/schemas/comment";
 
 interface CommentsSectionProps {
@@ -21,10 +21,10 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
   const { data: comments = [], isLoading, error } = useQueryComments(postId);
 
   const {
-    mutate: addComment,
+    mutate: createComment,
     isPending,
     error: submitError,
-  } = useMutationAddComment(postId);
+  } = useMutationCreateComment(postId);
 
   const isLoggedIn = !!session?.user;
 
@@ -40,7 +40,7 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
       return;
     }
 
-    addComment(parsed.data, {
+    createComment(parsed.data, {
       onSuccess: () => {
         setCommentContent("");
       },
