@@ -20,7 +20,9 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
-  const [editingFieldError, setEditingFieldError] = useState<string | null>(null);
+  const [editingFieldError, setEditingFieldError] = useState<string | null>(
+    null,
+  );
   const router = useRouter();
 
   // Query Comments (不變)
@@ -31,8 +33,10 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
     isPending,
     error: submitError,
   } = useMutationCreateComment(postId);
-  const { mutate: updateComment, isPending: isUpdating } = useMutationUpdateComment(postId);
-  const { mutate: removeComment, isPending: isDeleting } = useMutationDeleteComment(postId);
+  const { mutate: updateComment, isPending: isUpdating } =
+    useMutationUpdateComment(postId);
+  const { mutate: deleteComment, isPending: isDeleting } =
+    useMutationDeleteComment(postId);
 
   const isLoggedIn = !!session?.user;
 
@@ -65,11 +69,14 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
       return;
     }
 
-    createComment({ postId, content: parsed.data.content }, {
-      onSuccess: () => {
-        setCommentContent("");
+    createComment(
+      { postId, content: parsed.data.content },
+      {
+        onSuccess: () => {
+          setCommentContent("");
+        },
       },
-    });
+    );
   };
 
   const handleUpdateSubmit = (commentId: string) => {
@@ -102,7 +109,7 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
       return;
     }
 
-    removeComment(
+    deleteComment(
       { postId, id: commentId },
       {
         onError: (error) => {
@@ -192,7 +199,11 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
                               aria-label="留言操作"
                               className="p-2 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition cursor-pointer"
                             >
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <svg
+                                className="w-4 h-4"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
                                 <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
                               </svg>
                             </MenuButton>
@@ -210,11 +221,15 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
                               <MenuItem>
                                 <button
                                   type="button"
-                                  onClick={() => handleDeleteComment(comment.id)}
+                                  onClick={() =>
+                                    handleDeleteComment(comment.id)
+                                  }
                                   disabled={isDeleting}
                                   className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition cursor-pointer disabled:opacity-50"
                                 >
-                                  <span>{isDeleting ? "刪除中..." : "刪除"}</span>
+                                  <span>
+                                    {isDeleting ? "刪除中..." : "刪除"}
+                                  </span>
                                 </button>
                               </MenuItem>
                             </MenuItems>
@@ -235,7 +250,9 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
                             placeholder="編輯留言內容..."
                           />
                           {editingFieldError && (
-                            <p className="text-red-400 text-xs">{editingFieldError}</p>
+                            <p className="text-red-400 text-xs">
+                              {editingFieldError}
+                            </p>
                           )}
                           <div className="flex justify-end gap-2">
                             <button

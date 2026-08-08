@@ -29,7 +29,7 @@ export async function getCommentsByPostId(postId: string) {
 // 建立新留言
 export async function createComment(
   rawData: CommentInput,
-  author: { id?: string | null; name?: string | null; email?: string | null }
+  author: { id?: string | null; name?: string | null; email?: string | null },
 ) {
   // 1. Zod schema validation
   const parsed = commentSchema.safeParse(rawData);
