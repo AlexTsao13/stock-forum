@@ -3,6 +3,9 @@ export const getCommentList = async (
 ): Promise<ForumComment[]> => {
   const response = await fetch(`/api/posts/${postId}/comments`);
   const resData = await response.json();
+  if (!response.ok) {
+    throw new Error(resData.message || "無法載入留言");
+  }
   return resData.data || [];
 };
 
@@ -51,7 +54,7 @@ export const updateComment = async (data: {
 export const deleteComment = async (data: {
   postId: string;
   id: string;
-}): Promise<Pick<ForumComment, "id">> => {
+}): Promise<void> => {
   const response = await fetch(
     `/api/posts/${data.postId}/comments/${data.id}`,
     {
@@ -59,10 +62,9 @@ export const deleteComment = async (data: {
     },
   );
 
-  const resData = await response.json();
   if (!response.ok) {
-    throw new Error(resData.message || "Failed to delete comment");
+    const errData = await response.json().catch(() => ({})) as { message?: string };
+    throw new Error(errData.message || "Failed to delete comment");
   }
-
-  return resData.data;
+  // 204 No Content — 無 body 可解析
 };
