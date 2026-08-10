@@ -73,8 +73,8 @@ export const DELETE = withApiHandler(
     const { id } = await params;
 
     try {
-      const result = await deletePost(id, session.user.id as string);
-      return Response.json(success(result), { status: 200 });
+      await deletePost(id, session.user.id as string);
+      return new Response(null, { status: 204 });
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "刪除文章失敗，請重試";
