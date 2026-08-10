@@ -49,7 +49,7 @@ export async function createComment(
     id: uuidv4(),
     postId,
     content,
-    createdAt: new Date().getTime(),
+    createdAt: new Date(),
     isDeleted: false,
     deletedAt: null,
     author: {
@@ -75,28 +75,20 @@ export async function updateComment(
     throw new Error(message);
   }
 
+  const { content } = parsed.data;
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   const collection = db.collection("comments");
 
-  const comment = await collection.findOne({ id });
-  if (!comment) {
-    throw new Error("Comment not found");
-  }
-
-  if (comment.author?.id !== authorId) {
-    throw new Error("Forbidden: You are not the author of this comment");
-  }
-
-  if (comment.isDeleted) {
-    throw new Error("Comment not found");
-  }
-
-  const { content } = parsed.data;
-  await collection.updateOne(
-    { id },
-    { $set: { content, updatedAt: new Date().getTime() } },
+  const result = await collection.findOneAndUpdate(
+    { id, "author.id": authorId, isDeleted: false },
+    { $set: { content, updatedAt: new Date() } },
+    { returnDocument: "after" },
   );
+
+  if (!result) {
+    throw new Error("Comment not found or Forbidden");
+  }
 
   return { id, content };
 }
@@ -106,23 +98,14 @@ export async function deleteComment(id: string, authorId: string) {
   const db = client.db(DB_NAME);
   const collection = db.collection("comments");
 
-  const comment = await collection.findOne({ id });
-  if (!comment) {
-    throw new Error("Comment not found");
-  }
-
-  if (comment.author?.id !== authorId) {
-    throw new Error("Forbidden: You are not the author of this comment");
-  }
-
-  await collection.updateOne(
-    { id },
-    {
-      $set: {
-        isDeleted: true,
-        deletedAt: new Date().getTime(),
-      },
-    },
+  const result = await collection.findOneAndUpdate(
+    { id, "author.id": authorId },
+    { $set: { isDeleted: true, deletedAt: new Date() } },
   );
+
+  if (!result) {
+    throw new Error("Comment not found or Forbidden");
+  }
+
   return { id };
 }

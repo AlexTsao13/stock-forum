@@ -25,7 +25,7 @@ export async function createPost(
     id: uuidv4(),
     title,
     content,
-    createdAt: new Date().getTime(),
+    createdAt: new Date(),
     author: {
       id: author.id,
       name: author.name,
@@ -78,25 +78,21 @@ export async function updatePost(
     );
   }
 
+  const { title, content } = parsed.data;
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   const collection = db.collection("posts");
 
-  const post = await collection.findOne({ id });
-  if (!post) {
-    throw new Error("Post not found");
-  }
-
-  if (post.author?.id !== authorId) {
-    throw new Error("Forbidden: You are not the author of this post");
-  }
-
-  const { title, content } = parsed.data;
-  const updatedAt = new Date().getTime();
-  await collection.updateOne(
-    { id },
+  const updatedAt = new Date();
+  const result = await collection.findOneAndUpdate(
+    { id, "author.id": authorId },
     { $set: { title, content, updatedAt } },
+    { returnDocument: "after" },
   );
+
+  if (!result) {
+    throw new Error("Post not found or Forbidden");
+  }
 
   return { id, title, content, updatedAt };
 }
@@ -106,15 +102,10 @@ export async function deletePost(id: string, authorId: string) {
   const db = client.db(DB_NAME);
   const collection = db.collection("posts");
 
-  const post = await collection.findOne({ id });
-  if (!post) {
-    throw new Error("Post not found");
+  const result = await collection.findOneAndDelete({ id, "author.id": authorId });
+  if (!result) {
+    throw new Error("Post not found or Forbidden");
   }
 
-  if (post.author?.id !== authorId) {
-    throw new Error("Forbidden: You are not the author of this post");
-  }
-
-  await collection.deleteOne({ id });
   return { id };
 }
