@@ -8,10 +8,10 @@ export function success<T>(
   return { status, message, data };
 }
 
-export function error(
+export function error<T = null>(
   message = "Internal Server Error",
   status = BUSINESS_STATUS_CODE.ERROR,
-  data: any = null,
+  data: T = null as T,
 ) {
   return { status, message, data };
 }
