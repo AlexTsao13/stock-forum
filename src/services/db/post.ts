@@ -3,6 +3,7 @@ import clientPromise from "@/lib/mongodb";
 import { DB_NAME } from "@/config/constants";
 import { postSchema, PostInput } from "@/schemas/post";
 import { v4 as uuidv4 } from "uuid";
+import { setupIndexes } from "./initIndexes";
 
 export async function createPost(
   rawData: PostInput,
@@ -38,6 +39,7 @@ export async function createPost(
 }
 
 export async function getPostList(page: number, limit: number) {
+  await setupIndexes();
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   const collection = db.collection("posts");

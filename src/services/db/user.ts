@@ -3,6 +3,7 @@ import clientPromise from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { DB_NAME } from "@/config/constants";
+import { setupIndexes } from "./initIndexes";
 
 // 註冊新使用者
 export async function createUser(
@@ -10,6 +11,7 @@ export async function createUser(
   password: string,
   name?: string,
 ) {
+  await setupIndexes();
   const client = await clientPromise;
   const db = client.db(DB_NAME);
 
@@ -29,7 +31,7 @@ export async function createUser(
     email,
     password: hashedPassword,
     name: name || email.split("@")[0], // 如果沒給名字，就用 Email 前綴
-    createdAt: new Date().getTime(),
+    createdAt: new Date(),
   });
 
   return result;
@@ -37,6 +39,7 @@ export async function createUser(
 
 // 根據 Email 找人（登入時使用）
 export async function getUserByEmail(email: string) {
+  await setupIndexes();
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   return await db.collection("users").findOne({ email });
