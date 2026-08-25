@@ -43,13 +43,28 @@ export async function getPostList(page: number, limit: number) {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   const collection = db.collection("posts");
-  const total = await collection.countDocuments();
-  const posts = await collection
-    .find({})
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit)
+
+  const skip = (page - 1) * limit;
+
+  const [result] = await collection
+    .aggregate([
+      {
+        $facet: {
+          posts: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+          ],
+          totalCount: [
+            { $count: "total" },
+          ],
+        },
+      },
+    ])
     .toArray();
+
+  const posts = result?.posts || [];
+  const total = result?.totalCount[0]?.total || 0;
 
   return {
     posts,
