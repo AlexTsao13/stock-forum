@@ -16,6 +16,43 @@ const Pagination = ({ totalPages }: PaginationProps) => {
   const prevPage = Math.max(1, currentPage - 1);
   const nextPage = Math.min(totalPages, currentPage + 1);
 
+  // 根據規則產生頁碼清單
+  const getPageNumbers = (): (number | string)[] => {
+    // 1. 取得當前頁以及前後各 2 頁（限制在 1 ~ totalPages 之間）
+    const start = Math.max(1, currentPage - 2);
+    const end = Math.min(totalPages, currentPage + 2);
+    const corePages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      corePages.push(i);
+    }
+
+    const result: (number | string)[] = [];
+
+    // 2. 檢查是否包含第一頁 (1)
+    if (!corePages.includes(1)) {
+      result.push(1);
+      if (corePages[0] > 2) {
+        result.push("ellipsis-start");
+      }
+    }
+
+    // 3. 加入核心頁碼
+    result.push(...corePages);
+
+    // 4. 檢查是否包含最後一頁 (totalPages)
+    if (!corePages.includes(totalPages)) {
+      const lastCore = corePages[corePages.length - 1];
+      if (lastCore < totalPages - 1) {
+        result.push("ellipsis-end");
+      }
+      result.push(totalPages);
+    }
+
+    return result;
+  };
+
+  const pageItems = getPageNumbers();
+
   return (
     <div className="flex items-center justify-center gap-2 text-sm font-medium py-4">
       {/* 上一頁按鈕 */}
@@ -34,8 +71,19 @@ const Pagination = ({ totalPages }: PaginationProps) => {
 
       {/* 頁碼按鈕列表 */}
       <div className="flex items-center gap-1.5">
-        {Array.from({ length: totalPages }).map((_, index) => {
-          const pageNum = index + 1;
+        {pageItems.map((item) => {
+          if (typeof item === "string") {
+            return (
+              <span
+                key={item}
+                className="w-8 h-9 flex items-center justify-center text-white/40 select-none tracking-widest text-xs"
+              >
+                ...
+              </span>
+            );
+          }
+
+          const pageNum = item;
           const isActive = currentPage === pageNum;
           return (
             <Link
@@ -71,4 +119,3 @@ const Pagination = ({ totalPages }: PaginationProps) => {
 };
 
 export default Pagination;
-
