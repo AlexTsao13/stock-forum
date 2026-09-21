@@ -109,17 +109,31 @@ export default function LoginPage() {
           >
             {isDemoLoggingIn ||
             (isPending && email === "visitor@stockmarket.com") ? (
-              <span>🚀 訪客模式登入中...</span>
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                訪客登入中...
+              </span>
             ) : (
               <>
-                <span>✨</span> 訪客一鍵體驗
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                訪客一鍵體驗
               </>
             )}
           </button>
 
           {/* 說明文字 */}
           <div className="flex flex-col gap-1 text-center text-xs text-white/40 leading-relaxed">
-            <span>💡 本專案目前為展示模式，已關閉新會員註冊。</span>
+            <span className="flex items-center justify-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-white/50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              本專案目前為展示模式，已關閉新會員註冊。
+            </span>
             <span>
               點擊上方{" "}
               <span className="text-blue-400 font-semibold">訪客一鍵體驗</span>
