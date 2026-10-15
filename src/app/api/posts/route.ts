@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { withApiHandler } from "@/utils/withApiHandler";
+import { readJsonBody } from "@/utils/request";
 import { error, success } from "@/utils/apiResponse";
 import { BUSINESS_STATUS_CODE } from "@/config/constants";
 import { auth } from "@/auth";
@@ -17,6 +18,7 @@ export const GET = withApiHandler(async (request: NextRequest) => {
 });
 
 // POST /api/posts — 建立新文章（需登入）
+// 資料驗證失敗時 service 丟出 ValidationError，由 withApiHandler 轉成 400
 export const POST = withApiHandler(async (request: NextRequest) => {
   const session = await auth();
   if (!session?.user) {
@@ -25,21 +27,12 @@ export const POST = withApiHandler(async (request: NextRequest) => {
     });
   }
 
-  const body = await request.json();
+  const body = await readJsonBody(request);
 
-  try {
-    const newPost = await createPost(body, {
-      id: session.user.id,
-      name: session.user.name,
-      email: session.user.email,
-    });
+  const newPost = await createPost(body, {
+    id: session.user.id,
+    name: session.user.name,
+  });
 
-    return Response.json(success({ id: newPost.id }), { status: 201 });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Invalid post data";
-    return Response.json(
-      error(message, BUSINESS_STATUS_CODE.WARNING),
-      { status: 400 }
-    );
-  }
+  return Response.json(success({ id: newPost.id }), { status: 201 });
 });

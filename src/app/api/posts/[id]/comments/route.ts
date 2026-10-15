@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { withApiHandler } from "@/utils/withApiHandler";
+import { readJsonBody } from "@/utils/request";
 import { error, success } from "@/utils/apiResponse";
 import { BUSINESS_STATUS_CODE } from "@/config/constants";
 import { auth } from "@/auth";
@@ -20,6 +21,7 @@ export const GET = withApiHandler(
 );
 
 // POST /api/posts/[id]/comments — 在指定文章下新增留言（需登入）
+// 資料驗證失敗時 service 丟出 ValidationError，由 withApiHandler 轉成 400
 export const POST = withApiHandler(
   async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const session = await auth();
@@ -30,25 +32,16 @@ export const POST = withApiHandler(
     }
 
     const { id: postId } = await params;
-    const body = await request.json();
+    const body = await readJsonBody(request);
 
-    try {
-      const newComment = await createComment(
-        { postId, content: body.content },
-        {
-          id: session.user.id,
-          name: session.user.name,
-          email: session.user.email,
-        }
-      );
+    const newComment = await createComment(
+      { postId, content: body.content },
+      {
+        id: session.user.id,
+        name: session.user.name,
+      }
+    );
 
-      return Response.json(success(newComment), { status: 201 });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "資料格式錯誤";
-      return Response.json(error(message, BUSINESS_STATUS_CODE.WARNING), {
-        status: 400,
-      });
-    }
+    return Response.json(success(newComment), { status: 201 });
   }
 );
-
