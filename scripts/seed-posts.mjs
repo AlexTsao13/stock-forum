@@ -1,10 +1,12 @@
 // 產生展示用的假文章資料
 // 用法：
-//   npm run seed           新增 30 筆假文章
-//   npm run seed -- --clean 刪除所有由此腳本產生的假文章
+//   npm run seed               新增 30 筆假文章
+//   npm run seed -- --markdown 新增 5 篇使用 Markdown 排版的展示文章
+//   npm run seed -- --clean    刪除所有由此腳本產生的假文章
 import { readFileSync } from "node:fs";
 import { MongoClient } from "mongodb";
 import { v4 as uuidv4 } from "uuid";
+import { markdownPosts } from "./seed-markdown-posts.mjs";
 
 const DB_NAME = "post_db";
 
@@ -80,6 +82,31 @@ async function main() {
     if (process.argv.includes("--clean")) {
       const result = await collection.deleteMany({ isSeed: true });
       console.log(`已刪除 ${result.deletedCount} 筆假文章`);
+      return;
+    }
+
+    if (process.argv.includes("--markdown")) {
+      // 沿用資料庫中既有假作者的 id，讓同一位作者的文章集中在同一個作者頁
+      const seedAuthors = await Promise.all(
+        authors.map(async (author) => {
+          const existing = await collection.findOne(
+            { isSeed: true, "author.name": author.name },
+            { projection: { author: 1 } },
+          );
+          return existing?.author ?? author;
+        }),
+      );
+      const now = Date.now();
+      const docs = markdownPosts.map((post) => ({
+        id: uuidv4(),
+        title: post.title,
+        content: post.content,
+        createdAt: new Date(now - post.hoursAgo * 60 * 60 * 1000),
+        author: seedAuthors[post.authorIndex],
+        isSeed: true,
+      }));
+      const result = await collection.insertMany(docs);
+      console.log(`已新增 ${result.insertedCount} 篇 Markdown 展示文章`);
       return;
     }
 
