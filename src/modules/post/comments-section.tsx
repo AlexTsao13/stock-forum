@@ -9,6 +9,7 @@ import useMutationCreateComment from "@/hooks/use-mutation-create-comment";
 import useMutationUpdateComment from "@/hooks/use-mutation-update-comment";
 import useMutationDeleteComment from "@/hooks/use-mutation-delete-comment";
 import { commentContentSchema } from "@/schemas/comment";
+import ConfirmDialog from "@/components/confirm-dialog";
 
 interface CommentsSectionProps {
   postId: string;
@@ -23,6 +24,11 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
   const [editingFieldError, setEditingFieldError] = useState<string | null>(
     null,
   );
+  // 有值代表刪除確認視窗開啟中
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(
+    null,
+  );
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const router = useRouter();
 
   // Query Comments (不變)
@@ -104,22 +110,37 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
     );
   };
 
-  const handleDeleteComment = (commentId: string) => {
-    if (!confirm("確定要刪除這則留言嗎？")) {
-      return;
-    }
+  const handleOpenDeleteDialog = (commentId: string) => {
+    setDeleteError(null);
+    setDeletingCommentId(commentId);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeletingCommentId(null);
+    setDeleteError(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deletingCommentId) return;
+    const commentId = deletingCommentId;
+    setDeleteError(null);
 
     deleteComment(
       { postId, id: commentId },
       {
+        onSuccess: () => {
+          handleCloseDeleteDialog();
+          if (editingCommentId === commentId) {
+            resetEditingState();
+          }
+        },
         onError: (error) => {
-          alert(error instanceof Error ? error.message : "刪除留言失敗");
+          setDeleteError(
+            error instanceof Error ? error.message : "刪除留言失敗",
+          );
         },
       },
     );
-    if (editingCommentId === commentId) {
-      resetEditingState();
-    }
   };
 
   return (
@@ -222,14 +243,11 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    handleDeleteComment(comment.id)
+                                    handleOpenDeleteDialog(comment.id)
                                   }
-                                  disabled={isDeleting}
                                   className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition cursor-pointer disabled:opacity-50"
                                 >
-                                  <span>
-                                    {isDeleting ? "刪除中..." : "刪除"}
-                                  </span>
+                                  <span>刪除</span>
                                 </button>
                               </MenuItem>
                             </MenuItems>
@@ -365,6 +383,16 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={!!deletingCommentId}
+        onClose={handleCloseDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        title="刪除留言"
+        description="確定要刪除這則留言嗎？"
+        isPending={isDeleting}
+        error={deleteError}
+      />
     </div>
   );
 };
