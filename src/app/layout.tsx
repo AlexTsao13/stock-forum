@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import MyQueryClientProvider from "@/providers/my-query-client";
 import Navbar from "@/components/navbar";
+import Footer from "@/components/footer";
 import TickerTape from "@/components/ticker-tape";
 
 const geistSans = Geist({
@@ -16,9 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "StockMarket Insider | Premium Trading Forum",
-  description:
-    "The ultimate community for stock market analysis, trading strategies, and financial insights.",
+  title: "Stock Forum | 股票投資討論區",
+  description: "分享市場觀點、交易策略與投資心得的股票討論社群。",
 };
 
 export default function RootLayout({
@@ -27,15 +27,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="zh-Hant">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <Navbar />
-        <main className="pt-16">
+        <main className="pt-16 flex-1">
           <TickerTape />
           <MyQueryClientProvider>{children}</MyQueryClientProvider>
         </main>
+        <Footer />
       </body>
     </html>
   );
