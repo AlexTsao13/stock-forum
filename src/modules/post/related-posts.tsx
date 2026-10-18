@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import useQueryRelatedPosts from "@/hooks/use-query-related-posts";
+import { formatRelativeTime, stripMarkdown } from "@/utils/text";
 
 interface RelatedPostsProps {
   postId: string;
@@ -38,12 +39,12 @@ export const RelatedPosts = ({ postId }: RelatedPostsProps) => {
                     {post.title}
                   </h3>
                   <p className="mt-1 text-xs text-white/50 truncate">
-                    {post.content}
+                    {stripMarkdown(post.content)}
                   </p>
                   <p className="mt-2 text-[11px] text-white/30">
                     {post.author?.name}
                     <span className="mx-1.5">·</span>
-                    {new Date(post.createdAt).toLocaleDateString()}
+                    {formatRelativeTime(post.createdAt)}
                   </p>
                 </div>
 

@@ -6,8 +6,13 @@ interface PostListResponse {
   totalPages: number;
 }
 
-export const getPostList = async (page: string): Promise<PostListResponse> => {
-  const response = await fetch(`/api/posts?page=${page}&limit=5`);
+export const getPostList = async (
+  page: string,
+  authorId?: string,
+): Promise<PostListResponse> => {
+  const params = new URLSearchParams({ page, limit: "5" });
+  if (authorId) params.set("author", authorId);
+  const response = await fetch(`/api/posts?${params}`);
   const resData = await response.json();
   if (!response.ok) {
     throw new Error(resData.message || "無法載入文章列表");
@@ -60,7 +65,9 @@ export const deletePost = async (id: string) => {
     method: "DELETE",
   });
   if (!response.ok) {
-    const errData = await response.json().catch(() => ({})) as { message?: string };
+    const errData = (await response.json().catch(() => ({}))) as {
+      message?: string;
+    };
     throw new Error(errData.message || "刪除文章失敗，請重試");
   }
   // 204 No Content — 無 body 可解析
