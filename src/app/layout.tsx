@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import MyQueryClientProvider from "@/providers/my-query-client";
 import Navbar from "@/components/navbar";
+import TickerTape from "@/components/ticker-tape";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,7 @@ export default function RootLayout({
       >
         <Navbar />
         <main className="pt-16">
+          <TickerTape />
           <MyQueryClientProvider>{children}</MyQueryClientProvider>
         </main>
       </body>

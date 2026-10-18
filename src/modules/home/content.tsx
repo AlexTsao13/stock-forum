@@ -19,7 +19,6 @@ export default async function Content({ page = 1 }: ContentProps) {
         height={396}
         alt="stock-market-banner"
       />
-
       <h1 className="text-2xl font-bold mt-2">@stockmarket</h1>
       <p className="text-sm text-white/50 mt-2">
         Join the conversation on global markets, trading strategies, and
