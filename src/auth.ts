@@ -1,8 +1,8 @@
-import NextAuth from "next-auth";
+import NextAuth, { type Session } from "next-auth";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "./lib/mongodb"; // 注意這裡的路徑
 import Credentials from "next-auth/providers/credentials";
-import { getUserByEmail } from "@/services/db/user";
+import { createGuestUser, getUserByEmail } from "@/services/db/user";
 import bcrypt from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -42,6 +42,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return null;
       },
     }),
+    // 訪客匿名登入：每次建立一個新的暫時帳號（24 小時後自動刪除），不需要帳密
+    Credentials({
+      id: "guest",
+      name: "Guest",
+      credentials: {},
+      async authorize() {
+        const guest = await createGuestUser();
+        return {
+          id: guest.id,
+          email: guest.email,
+          name: guest.name,
+          guestExpiresAt: guest.expiresAt.toISOString(),
+        };
+      },
+    }),
   ],
   pages: {
     signIn: "/login", // 自定義登入頁面路徑
@@ -52,6 +67,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user?.id) {
         token.id = user.id;
       }
+      if (user?.guestExpiresAt) {
+        token.guestExpiresAt = user.guestExpiresAt;
+      }
+      // 訪客帳號已過期（資料已被 TTL 刪除）→ 回傳 null 讓 session 失效，等同登出
+      if (
+        token.guestExpiresAt &&
+        Date.now() > new Date(token.guestExpiresAt).getTime()
+      ) {
+        return null;
+      }
       return token;
     },
     // 每次存取 session 時，把 token.id 帶入 session.user.id
@@ -59,8 +84,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token?.id) {
         session.user.id = token.id as string;
       }
+      session.user.guestExpiresAt = token.guestExpiresAt;
       return session;
     },
   },
 });
 
+// 訪客發文、留言時帶上與帳號相同的到期時間；一般使用者回傳 undefined
+export function getGuestExpiresAt(session: Session | null) {
+  const value = session?.user?.guestExpiresAt;
+  return value ? new Date(value) : undefined;
+}

@@ -27,6 +27,14 @@ export async function setupIndexes() {
     await db.collection("comments").createIndex({ id: 1 }, { unique: true });
     await db.collection("comments").createIndex({ postId: 1, createdAt: 1 });
 
+    // 4. 訪客資料自動清理（TTL）：有 expiresAt 欄位的文件會在該時間後被 MongoDB 刪除
+    //    一般使用者與其內容沒有 expiresAt，不受影響
+    for (const name of ["users", "posts", "comments"]) {
+      await db
+        .collection(name)
+        .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    }
+
     indexesCreated = true;
   } catch (error) {
     console.error("Failed to create MongoDB indexes:", error);
