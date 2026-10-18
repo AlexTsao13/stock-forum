@@ -55,9 +55,7 @@ export async function getPostList(page: number, limit: number) {
             { $skip: skip },
             { $limit: limit },
           ],
-          totalCount: [
-            { $count: "total" },
-          ],
+          totalCount: [{ $count: "total" }],
         },
       },
     ])
@@ -119,10 +117,61 @@ export async function deletePost(id: string, authorId: string) {
   const db = client.db(DB_NAME);
   const collection = db.collection("posts");
 
-  const result = await collection.findOneAndDelete({ id, "author.id": authorId });
+  const result = await collection.findOneAndDelete({
+    id,
+    "author.id": authorId,
+  });
   if (!result) {
     throw new Error("Post not found or Forbidden");
   }
 
   return { id };
+}
+
+// 相關文章：優先取同作者的其他文章，不足再用最新文章補滿
+export async function getRelatedPosts(id: string, limit: number) {
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+  const collection = db.collection("posts");
+
+  const current = await collection.findOne(
+    { id },
+    { projection: { "author.id": 1 } },
+  );
+  if (!current) return [];
+
+  const projection = {
+    _id: 0,
+    id: 1,
+    title: 1,
+    content: 1,
+    createdAt: 1,
+    "author.id": 1,
+    "author.name": 1,
+  };
+
+  const sameAuthorPosts = current.author?.id
+    ? await collection
+        .find(
+          { id: { $ne: id }, "author.id": current.author.id },
+          { projection },
+        )
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .toArray()
+    : [];
+
+  const remaining = limit - sameAuthorPosts.length;
+  if (remaining <= 0) return sameAuthorPosts;
+
+  const latestPosts = await collection
+    .find(
+      { id: { $nin: [id, ...sameAuthorPosts.map((post) => post.id)] } },
+      { projection },
+    )
+    .sort({ createdAt: -1 })
+    .limit(remaining)
+    .toArray();
+
+  return [...sameAuthorPosts, ...latestPosts];
 }
