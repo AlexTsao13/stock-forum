@@ -10,14 +10,15 @@ import { getPostList } from "@/services/client/post";
 // 預載資料在這段時間內視為新鮮，切換頁面時直接使用，不會重複請求
 const POST_LIST_STALE_TIME = 30 * 1000;
 
-const useQueryPostList = () => {
+// authorId 選填：有傳就只取該作者的文章（作者頁使用）
+const useQueryPostList = (authorId?: string) => {
   const searchParams = useSearchParams();
   const currentPage = searchParams.get("page") || "1";
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["posts", currentPage],
-    queryFn: () => getPostList(currentPage),
+    queryKey: ["posts", currentPage, authorId],
+    queryFn: () => getPostList(currentPage, authorId),
     staleTime: POST_LIST_STALE_TIME,
     // 跳到還沒預載的頁面時，先保留上一頁的資料，避免閃出 Loading
     placeholderData: keepPreviousData,
@@ -34,12 +35,12 @@ const useQueryPostList = () => {
       .filter((p) => p >= 1 && p <= totalPages)
       .forEach((p) => {
         queryClient.prefetchQuery({
-          queryKey: ["posts", String(p)],
-          queryFn: () => getPostList(String(p)),
+          queryKey: ["posts", String(p), authorId],
+          queryFn: () => getPostList(String(p), authorId),
           staleTime: POST_LIST_STALE_TIME,
         });
       });
-  }, [currentPage, totalPages, queryClient]);
+  }, [currentPage, totalPages, authorId, queryClient]);
 
   return query;
 };

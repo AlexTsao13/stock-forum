@@ -47,20 +47,14 @@ export async function loginAction(
   }
 }
 
+// 訪客匿名登入：每次建立一個獨立的暫時帳號（見 auth.ts 的 guest provider）
 export async function loginAsGuestAction(): Promise<LoginState> {
-  const email = process.env.DEMO_EMAIL || "visitor@stockmarket.com";
-  const password = process.env.DEMO_PASSWORD || "123456";
-
   try {
-    await signIn("credentials", {
-      email,
-      password,
-      redirectTo: "/", // Redirect to home on success
-    });
+    await signIn("guest", { redirectTo: "/" });
     return {};
   } catch (error) {
     if (error instanceof AuthError) {
-      return { error: "訪客帳號登入失敗，請確認伺服器設定" };
+      return { error: "訪客登入失敗，請稍後再試" };
     }
     throw error;
   }

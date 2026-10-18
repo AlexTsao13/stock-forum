@@ -18,3 +18,38 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Markdown 編輯器（@uiw/react-md-editor）配合網站的深色主題 */
+.forum-md-editor .w-md-editor {
+  --md-editor-background-color: rgb(255 255 255 / 0.05);
+  --md-editor-box-shadow-color: rgb(255 255 255 / 0.1);
+  border-radius: 0.5rem;
+}
+.forum-md-editor .w-md-editor:focus-within {
+  --md-editor-box-shadow-color: rgb(59 130 246 / 0.6);
+}
+.forum-md-editor.has-error .w-md-editor {
+  --md-editor-box-shadow-color: rgb(239 68 68 / 0.7);
+}
+.forum-md-editor .w-md-editor-toolbar {
+  background-color: transparent;
+  border-bottom-color: rgb(255 255 255 / 0.1);
+  border-radius: 0.5rem 0.5rem 0 0;
+  padding: 6px 8px;
+}
+.forum-md-editor .w-md-editor-toolbar ul {
+  display: flex;
+  align-items: center;
+}
+.forum-md-editor .w-md-editor-toolbar li > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 7px;
+  border-radius: 6px;
+}
+.forum-md-editor .w-md-editor-toolbar li > button svg {
+  width: 14px;
+  height: 14px;
+}

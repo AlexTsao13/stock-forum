@@ -10,6 +10,8 @@ import useMutationUpdateComment from "@/hooks/use-mutation-update-comment";
 import useMutationDeleteComment from "@/hooks/use-mutation-delete-comment";
 import { commentContentSchema } from "@/schemas/comment";
 import ConfirmDialog from "@/components/confirm-dialog";
+import Avatar from "@/components/avatar";
+import { formatRelativeTime } from "@/utils/text";
 
 interface CommentsSectionProps {
   postId: string;
@@ -144,7 +146,11 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
   };
 
   return (
-    <div className="w-full mt-10 pt-10 border-t border-white/10">
+    // id 給文章「前往留言」按鈕捲動用；scroll-mt 避開 fixed 的 Navbar
+    <div
+      id="comments"
+      className="w-full mt-10 pt-10 border-t border-white/10 scroll-mt-16"
+    >
       <div className="flex items-center gap-3 mb-6">
         <h2 className="text-xl font-bold text-white">留言區</h2>
         <span className="bg-white/10 text-white/80 text-xs font-semibold px-2.5 py-0.5 rounded-full border border-white/5">
@@ -167,9 +173,8 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
         )}
 
         {!isLoading && !error && comments.length === 0 && (
-          <div className="py-12 text-center text-white/30 text-sm">
-            <p className="font-semibold text-white/40">目前還沒有留言</p>
-            <p className="text-xs mt-1 text-white/20">成為第一個留言的人吧</p>
+          <div className="py-5 text-center text-sm text-white/40">
+            目前還沒有留言，成為第一個留言的人吧
           </div>
         )}
 
@@ -187,9 +192,7 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
                   className="hover:bg-white/[0.02] p-4 transition-all duration-300 group relative"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-tr from-purple-500 via-violet-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm flex-shrink-0 select-none">
-                      {comment.author?.name?.[0]?.toUpperCase() || "?"}
-                    </div>
+                    <Avatar name={comment.author?.name} size="sm" />
 
                     <div className="flex-1">
                       <div className="flex items-start justify-between gap-3">
@@ -199,7 +202,7 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
                           </p>
                           <div className="mt-1 flex flex-wrap items-center gap-2">
                             <p className="text-white/30 text-[10px]">
-                              {new Date(comment.createdAt).toLocaleString()}
+                              {formatRelativeTime(comment.createdAt)}
                             </p>
                             {isEdited && (
                               <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-white/50">
@@ -309,9 +312,7 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
             className="p-4 bg-white/[0.01] hover:bg-white/[0.02] focus-within:bg-white/[0.03] transition-all duration-300"
           >
             <div className="flex gap-3">
-              <div className="w-9 h-9 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md flex-shrink-0 select-none">
-                {session.user?.name?.[0]?.toUpperCase() || "?"}
-              </div>
+              <Avatar name={session.user?.name} size="md" />
 
               <div className="flex-1">
                 <textarea
@@ -342,7 +343,7 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
                   <button
                     type="submit"
                     disabled={isPending || !commentContent.trim()}
-                    className="inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 disabled:from-white/10 disabled:to-white/10 disabled:text-white/30 disabled:cursor-not-allowed rounded-xl transition-all duration-300 active:scale-95 shadow-md shadow-indigo-500/10 cursor-pointer"
+                    className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:bg-white/10 disabled:text-white/30 disabled:cursor-not-allowed rounded-lg transition active:scale-95 cursor-pointer"
                   >
                     {isPending ? "送出中..." : "送出留言"}
                   </button>
@@ -356,15 +357,13 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
             className="p-4 bg-white/[0.01] hover:bg-white/[0.03] cursor-pointer transition-all duration-300 group"
           >
             <div className="flex gap-3">
-              <div className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center text-white/40 font-bold text-sm shadow-md flex-shrink-0 select-none">
-                ?
-              </div>
+              <Avatar size="md" />
 
               <div className="flex-1">
                 <textarea
                   readOnly
                   placeholder="登入後即可留言..."
-                  className="w-full bg-transparent text-sm text-white placeholder-white/30 focus:outline-none resize-none min-h-[80px] leading-relaxed pt-1 cursor-pointer"
+                  className="w-full bg-transparent text-sm text-white placeholder-white/30 focus:outline-none resize-none min-h-[40px] leading-relaxed pt-1 cursor-pointer"
                 />
 
                 <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
@@ -373,7 +372,7 @@ export const CommentsSection = ({ postId, session }: CommentsSectionProps) => {
                   </span>
                   <button
                     type="button"
-                    className="inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 rounded-xl transition-all duration-300 shadow-md shadow-indigo-500/10 cursor-pointer"
+                    className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition cursor-pointer"
                   >
                     登入
                   </button>

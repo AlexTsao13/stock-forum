@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { withApiHandler } from "@/utils/withApiHandler";
 import { error, success } from "@/utils/apiResponse";
 import { BUSINESS_STATUS_CODE } from "@/config/constants";
-import { auth } from "@/auth";
+import { auth, getGuestExpiresAt } from "@/auth";
 import {
   getCommentsByPostId,
   createComment,
@@ -39,6 +39,7 @@ export const POST = withApiHandler(
           id: session.user.id,
           name: session.user.name,
           email: session.user.email,
+          expiresAt: getGuestExpiresAt(session),
         }
       );
 

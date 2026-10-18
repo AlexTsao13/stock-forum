@@ -29,7 +29,13 @@ export async function getCommentsByPostId(postId: string) {
 // 建立新留言
 export async function createComment(
   rawData: CommentInput,
-  author: { id?: string | null; name?: string | null; email?: string | null },
+  author: {
+    id?: string | null;
+    name?: string | null;
+    email?: string | null;
+    // 訪客的內容帶上與帳號相同的到期時間，由 TTL 索引自動刪除
+    expiresAt?: Date;
+  },
 ) {
   // 1. Zod schema validation
   const parsed = commentSchema.safeParse(rawData);
@@ -57,6 +63,7 @@ export async function createComment(
       name: author.name,
       email: author.email,
     },
+    ...(author.expiresAt && { expiresAt: author.expiresAt }),
   };
 
   await collection.insertOne(newComment);

@@ -7,7 +7,13 @@ import { setupIndexes } from "./initIndexes";
 
 export async function createPost(
   rawData: PostInput,
-  author: { id?: string | null; name?: string | null; email?: string | null },
+  author: {
+    id?: string | null;
+    name?: string | null;
+    email?: string | null;
+    // 訪客的內容帶上與帳號相同的到期時間，由 TTL 索引自動刪除
+    expiresAt?: Date;
+  },
 ) {
   // 1. Zod schema validation
   const parsed = postSchema.safeParse(rawData);
@@ -32,13 +38,18 @@ export async function createPost(
       name: author.name,
       email: author.email,
     },
+    ...(author.expiresAt && { expiresAt: author.expiresAt }),
   };
 
   await db.collection("posts").insertOne(newPost);
   return newPost;
 }
 
-export async function getPostList(page: number, limit: number) {
+export async function getPostList(
+  page: number,
+  limit: number,
+  authorId?: string,
+) {
   await setupIndexes();
   const client = await clientPromise;
   const db = client.db(DB_NAME);
@@ -48,12 +59,35 @@ export async function getPostList(page: number, limit: number) {
 
   const [result] = await collection
     .aggregate([
+      // 有傳 authorId 時只取該作者的文章（作者頁使用）
+      { $match: authorId ? { "author.id": authorId } : {} },
       {
         $facet: {
           posts: [
             { $sort: { createdAt: -1 } },
             { $skip: skip },
             { $limit: limit },
+            // 只對這一頁的文章計算留言數（使用 comments 的 postId 索引）
+            {
+              $lookup: {
+                from: "comments",
+                let: { postId: "$id" },
+                pipeline: [
+                  { $match: { $expr: { $eq: ["$postId", "$$postId"] } } },
+                  { $count: "count" },
+                ],
+                as: "commentStats",
+              },
+            },
+            {
+              $addFields: {
+                commentCount: {
+                  $ifNull: [{ $first: "$commentStats.count" }, 0],
+                },
+              },
+            },
+            // 不把作者 email 傳到前端
+            { $project: { commentStats: 0, "author.email": 0 } },
           ],
           totalCount: [{ $count: "total" }],
         },
@@ -73,11 +107,46 @@ export async function getPostList(page: number, limit: number) {
   };
 }
 
+// 作者頁標題用：從該作者最新一篇文章取得名稱，並計算文章數
+export async function getAuthorProfile(authorId: string) {
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+  const collection = db.collection("posts");
+
+  const latestPost = await collection.findOne(
+    { "author.id": authorId },
+    { sort: { createdAt: -1 }, projection: { "author.name": 1 } },
+  );
+  if (!latestPost) return null;
+
+  const postCount = await collection.countDocuments({
+    "author.id": authorId,
+  });
+
+  return {
+    id: authorId,
+    name: latestPost.author?.name as string,
+    postCount,
+  };
+}
+
 export async function getPostById(id: string) {
   const client = await clientPromise;
   const db = client.db(DB_NAME);
   const collection = db.collection("posts");
-  return await collection.findOne({ id });
+  // 不把作者 email 傳到前端
+  const post = await collection.findOne(
+    { id },
+    { projection: { "author.email": 0 } },
+  );
+  if (!post) return null;
+
+  // 側邊欄作者卡片用：該作者的文章總數
+  const authorPostCount = post.author?.id
+    ? await collection.countDocuments({ "author.id": post.author.id })
+    : 0;
+
+  return { ...post, authorPostCount };
 }
 
 export async function updatePost(
@@ -174,4 +243,17 @@ export async function getRelatedPosts(id: string, limit: number) {
     .toArray();
 
   return [...sameAuthorPosts, ...latestPosts];
+}
+
+// 首頁 banner 用：全站文章數與會員數
+export async function getForumStats() {
+  const client = await clientPromise;
+  const db = client.db(DB_NAME);
+
+  const [postCount, userCount] = await Promise.all([
+    db.collection("posts").countDocuments(),
+    db.collection("users").countDocuments(),
+  ]);
+
+  return { postCount, userCount };
 }

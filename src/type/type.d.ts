@@ -8,6 +8,10 @@ interface Post {
     id: string;
     name: string;
   };
+  // 只有文章詳情 API 會回傳
+  authorPostCount?: number;
+  // 只有文章列表 API 會回傳
+  commentCount?: number;
 }
 
 interface ForumComment {

@@ -1,11 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Session } from "next-auth";
 import useMutationDeletePost from "@/hooks/use-mutation-delete-post";
 import { useEffect, useState } from "react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import ConfirmDialog from "@/components/confirm-dialog";
+import useQueryComments from "@/hooks/use-query-comments";
+import Avatar from "@/components/avatar";
+import MarkdownContent from "@/components/markdown-content";
+import { formatRelativeTime } from "@/utils/text";
 
 interface PostDetailProps {
   post: Post;
@@ -19,6 +24,26 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
   const isEdited = !!post.updatedAt && post.updatedAt > post.createdAt;
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
+
+  // 與留言區共用同一個 query key，React Query 不會重複請求
+  const { data: comments } = useQueryComments(post.id);
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setIsLinkCopied(true);
+      setTimeout(() => setIsLinkCopied(false), 2000);
+    } catch {
+      // 瀏覽器不允許存取剪貼簿時不做任何事
+    }
+  };
+
+  const handleScrollToComments = () => {
+    document
+      .getElementById("comments")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const {
     mutate: deletePost,
@@ -47,15 +72,32 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
     <div className="w-full pb-10">
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3 text-gray-400 text-sm">
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs">
-            {post.author?.name?.[0]}
-          </div>
+          <Avatar name={post.author?.name} size="sm" />
           <div className="flex gap-2 items-center">
-            <p className="text-white font-medium">{post.author?.name}</p>
+            {post.author?.id ? (
+              <Link
+                href={`/author/${post.author.id}`}
+                className="text-white font-medium hover:text-blue-400 transition"
+              >
+                {post.author.name}
+              </Link>
+            ) : (
+              <p className="text-white font-medium">{post.author?.name}</p>
+            )}
             <span className="text-white/20">|</span>
-            <p className="text-white/40">
-              {new Date(post.createdAt).toLocaleDateString()}
-            </p>
+            <time
+              dateTime={new Date(post.createdAt).toISOString()}
+              title={new Date(post.createdAt).toLocaleString()}
+              className="text-white/40"
+            >
+              {formatRelativeTime(post.createdAt)}
+            </time>
+            {comments && (
+              <>
+                <span className="text-white/20">|</span>
+                <p className="text-white/40">{comments.length} 則留言</p>
+              </>
+            )}
             {isEdited && (
               <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-medium text-white/50">
                 已編輯
@@ -132,8 +174,70 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
         {post.title}
       </h1>
 
-      <div className="text-lg text-white/80 leading-relaxed whitespace-pre-wrap border-t border-white/10 pt-8">
-        {post.content}
+      {/* 內文以 Markdown 渲染（粗體、清單、連結等） */}
+      <div className="text-lg text-white/80 leading-relaxed break-words border-t border-white/10 pt-8">
+        <MarkdownContent content={post.content} />
+      </div>
+
+      {/* 文末操作列 */}
+      <div className="flex items-center gap-2 mt-10">
+        <button
+          type="button"
+          onClick={handleCopyLink}
+          className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-sm text-white/70 hover:text-white transition cursor-pointer"
+        >
+          {isLinkCopied ? (
+            <svg
+              className="w-4 h-4 text-emerald-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          ) : (
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+              />
+            </svg>
+          )}
+          <span>{isLinkCopied ? "已複製連結" : "複製連結"}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleScrollToComments}
+          className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-sm text-white/70 hover:text-white transition cursor-pointer"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            />
+          </svg>
+          <span>前往留言</span>
+        </button>
       </div>
 
       <ConfirmDialog
