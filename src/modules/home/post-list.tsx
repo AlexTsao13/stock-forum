@@ -15,7 +15,7 @@ const PostList = ({ page = 1 }: PostListProps) => {
   return (
     // 顯示上一頁暫存資料時稍微淡化，讓使用者知道新資料載入中
     <div
-      className={`mt-8 transition-opacity duration-200 ${
+      className={`mt-2 transition-opacity duration-200 ${
         isPlaceholderData ? "opacity-60" : ""
       }`}
     >
