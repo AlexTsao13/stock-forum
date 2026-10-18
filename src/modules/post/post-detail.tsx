@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import { Session } from "next-auth";
 import useMutationDeletePost from "@/hooks/use-mutation-delete-post";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import ConfirmDialog from "@/components/confirm-dialog";
 
 interface PostDetailProps {
   post: Post;
@@ -17,10 +18,14 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
   const isAuthor = session?.user?.id === post.author?.id;
   const isEdited = !!post.updatedAt && post.updatedAt > post.createdAt;
 
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
   const {
     mutate: deletePost,
     isPending: isDeleting,
     isSuccess: isDeleteSuccess,
+    error: deleteError,
+    reset: resetDelete,
   } = useMutationDeletePost();
 
   useEffect(() => {
@@ -29,8 +34,12 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
     }
   }, [isDeleteSuccess, router]);
 
-  const handleDelete = () => {
-    if (!confirm("確定要刪除這篇貼文嗎？")) return;
+  const handleOpenDeleteDialog = () => {
+    resetDelete();
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
     deletePost(post.id);
   };
 
@@ -94,7 +103,7 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
 
               <MenuItem>
                 <button
-                  onClick={handleDelete}
+                  onClick={handleOpenDeleteDialog}
                   disabled={isDeleting}
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition cursor-pointer disabled:opacity-50"
                 >
@@ -126,6 +135,22 @@ export const PostDetail = ({ post, session, onEditClick }: PostDetailProps) => {
       <div className="text-lg text-white/80 leading-relaxed whitespace-pre-wrap border-t border-white/10 pt-8">
         {post.content}
       </div>
+
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="刪除貼文"
+        description="確定要刪除這篇貼文嗎？刪除後無法復原。"
+        isPending={isDeleting || isDeleteSuccess}
+        error={
+          deleteError
+            ? deleteError instanceof Error
+              ? deleteError.message
+              : "刪除貼文失敗"
+            : null
+        }
+      />
     </div>
   );
 };

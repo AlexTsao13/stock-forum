@@ -65,3 +65,12 @@ export const deletePost = async (id: string) => {
   }
   // 204 No Content — 無 body 可解析
 };
+
+export const getRelatedPosts = async (id: string): Promise<Post[]> => {
+  const response = await fetch(`/api/posts/${id}/related`);
+  const resData = await response.json();
+  if (!response.ok) {
+    throw new Error(resData.message || "無法載入相關文章");
+  }
+  return resData.data;
+};

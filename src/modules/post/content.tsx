@@ -3,6 +3,7 @@ import { useState } from "react";
 import useQueryPost from "@/hooks/use-query-post";
 import { PostDetail } from "./post-detail";
 import { CommentsSection } from "./comments-section";
+import { RelatedPosts } from "./related-posts";
 import { useRouter } from "next/navigation";
 import { Session } from "next-auth";
 import PostEditor from "@/modules/home/post-editor";
@@ -48,6 +49,7 @@ const Content = ({ session }: ContentProps) => {
         onEditClick={() => setIsEditOpen(true)}
       />
       <CommentsSection postId={post.id} session={session} />
+      <RelatedPosts postId={post.id} />
 
       {/* 編輯文章 Modal（僅在作者點擊編輯時渲染） */}
       <PostEditor

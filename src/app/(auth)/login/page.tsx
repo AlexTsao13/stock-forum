@@ -1,12 +1,38 @@
 "use client";
-import { loginAction, loginAsGuestAction } from "./action";
+import { loginAction, loginAsGuestAction, type LoginState } from "./action";
 import { useActionState, useState } from "react";
+import { loginSchema } from "@/schemas/auth";
 
 export default function LoginPage() {
   const [state, formAction, isPending] = useActionState(loginAction, null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isDemoLoggingIn, setIsDemoLoggingIn] = useState(false);
+  const [clientFieldErrors, setClientFieldErrors] =
+    useState<LoginState["fieldErrors"]>(undefined);
+
+  // 前端驗證失敗時直接顯示前端錯誤，不沿用上一次 Server Action 的結果
+  const fieldErrors = clientFieldErrors ?? state?.fieldErrors;
+  const formError = clientFieldErrors ? null : state?.error;
+
+  // 有錯誤時改用紅框 + 紅色光暈標註
+  const getInputClassName = (hasError: boolean) =>
+    `w-full p-3 bg-black/40 border rounded-xl text-white outline-none focus:ring-2 transition-all duration-200 text-sm ${
+      hasError
+        ? "border-red-500/70 ring-2 ring-red-500/20 focus:ring-red-500/30 focus:border-red-500"
+        : "border-white/10 focus:ring-emerald-500/30 focus:border-emerald-500"
+    }`;
+
+  // 送出前先在前端用 Zod 驗證，格式錯誤就不呼叫 Server Action，避免閃過 loading
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const parsed = loginSchema.safeParse({ email, password });
+    if (!parsed.success) {
+      e.preventDefault();
+      setClientFieldErrors(parsed.error.flatten().fieldErrors);
+      return;
+    }
+    setClientFieldErrors(undefined);
+  };
 
   const handleDemoLogin = () => {
     setIsDemoLoggingIn(true);
@@ -35,14 +61,20 @@ export default function LoginPage() {
         </div>
 
         {/* 顯示錯誤訊息 */}
-        {state?.error && (
+        {formError && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl mb-6 text-sm text-center animate-pulse">
-            {state.error}
+            {formError}
           </div>
         )}
 
         {/* 1. 傳統登入表單區塊 */}
-        <form action={formAction} className="flex flex-col gap-4">
+        {/* noValidate：關閉瀏覽器原生驗證泡泡，統一由 Zod (loginSchema) 顯示錯誤 */}
+        <form
+          action={formAction}
+          onSubmit={handleSubmit}
+          noValidate
+          className="flex flex-col gap-4"
+        >
           <div>
             <label className="block text-xs font-semibold text-white/40 mb-1.5 uppercase tracking-wider">
               電子信箱
@@ -55,11 +87,12 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               readOnly={isDemoLoggingIn}
-              className="w-full p-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all duration-200 text-sm"
+              aria-invalid={!!fieldErrors?.email}
+              className={getInputClassName(!!fieldErrors?.email)}
             />
-            {state?.fieldErrors?.email && (
-              <p className="text-red-400 text-xs mt-1">
-                {state.fieldErrors.email[0]}
+            {fieldErrors?.email && (
+              <p className="text-red-400 text-xs mt-1.5">
+                {fieldErrors.email[0]}
               </p>
             )}
           </div>
@@ -76,11 +109,12 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               readOnly={isDemoLoggingIn}
-              className="w-full p-3 bg-black/40 border border-white/10 rounded-xl text-white outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all duration-200 text-sm"
+              aria-invalid={!!fieldErrors?.password}
+              className={getInputClassName(!!fieldErrors?.password)}
             />
-            {state?.fieldErrors?.password && (
-              <p className="text-red-400 text-xs mt-1">
-                {state.fieldErrors.password[0]}
+            {fieldErrors?.password && (
+              <p className="text-red-400 text-xs mt-1.5">
+                {fieldErrors.password[0]}
               </p>
             )}
           </div>

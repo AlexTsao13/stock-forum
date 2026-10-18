@@ -18,6 +18,10 @@ export async function setupIndexes() {
     // 2. Posts 集合索引
     await db.collection("posts").createIndex({ id: 1 }, { unique: true });
     await db.collection("posts").createIndex({ createdAt: -1 });
+    // 相關文章：依作者查詢並按時間排序
+    await db
+      .collection("posts")
+      .createIndex({ "author.id": 1, createdAt: -1 });
 
     // 3. Comments 集合索引
     await db.collection("comments").createIndex({ id: 1 }, { unique: true });

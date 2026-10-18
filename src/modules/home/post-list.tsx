@@ -10,10 +10,15 @@ interface PostListProps {
 }
 
 const PostList = ({ page = 1 }: PostListProps) => {
-  const { data, isLoading, error } = useQueryPostList();
+  const { data, isLoading, error, isPlaceholderData } = useQueryPostList();
   const { posts = [], totalPages = 1 } = data || {};
   return (
-    <div className="mt-8 ">
+    // 顯示上一頁暫存資料時稍微淡化，讓使用者知道新資料載入中
+    <div
+      className={`mt-2 transition-opacity duration-200 ${
+        isPlaceholderData ? "opacity-60" : ""
+      }`}
+    >
       {isLoading && <p>Loading...</p>}
       {error && <div>{error.message}</div>}
       {!isLoading && posts.length === 0 && !isLoading && <p>No posts found</p>}
